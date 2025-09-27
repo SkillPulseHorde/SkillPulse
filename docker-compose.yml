@@ -1,0 +1,17 @@
+﻿services:
+  api-gateway:
+    build:
+      context: ./ApiGateway
+      dockerfile: Dockerfile
+    image: api-gateway:local
+    ports:
+      - "5000:8080" 
+    depends_on:
+      - userservice
+
+  userservice:
+    build:
+      context: ./UserService.Api
+      dockerfile: Dockerfile
+    ports:
+      - "5001:8080"
