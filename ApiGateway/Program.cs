@@ -8,7 +8,13 @@ builder.Services.AddReverseProxy()
 
 var app = builder.Build();
 
-app.MapGet("/__ping", () => Results.Text("pong"));
+app.MapGet("/ping", () => Results.Text("pong")); // TODO: Тест, потом убрать 
+
+app.UseSwaggerUI(c =>
+{
+    c.SwaggerEndpoint("/swagger/userservice/swagger.json", "UserService");
+    //c.SwaggerEndpoint("/swagger/otherservice/swagger.json", "OtherService");
+});
 
 app.MapReverseProxy();
 
