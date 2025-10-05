@@ -1,4 +1,5 @@
-﻿using MediatR;
+﻿using Common;
+using MediatR;
 using UserService.Application.Dto;
 using UserService.Domain.Repos;
 
@@ -20,7 +21,7 @@ public sealed class GetUserByIdQueryHandler : IRequestHandler<GetUserByIdQuery, 
         var user = await _repo.GetUserByIdAsync(request.Id, ct);
 
         return user is null 
-            ? Result<UserDto>.Failure() 
+            ? Result<UserDto>.Failure(Error.NotFound($"User with id {request.Id} not found.")) 
             : Result<UserDto>.Success(user.ToDto());
     }
 }
