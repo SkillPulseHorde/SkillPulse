@@ -1,4 +1,6 @@
-﻿using MediatR;
+﻿
+using Common;
+using MediatR;
 using UserService.Application.Dto;
 using UserService.Domain.Repos;
 
@@ -6,7 +8,7 @@ namespace UserService.Application.Queries;
 
 public sealed record GetSubordinatesByUserIdQuery(Guid Id) : IRequest<Result<SubordinatesDto>>;
 
-public sealed class GetSubordinatesByUserIdQueryHandler : IRequestHandler<GetSubordinatesByUserIdQuery, Result<SubordinatesDto>>
+internal sealed class GetSubordinatesByUserIdQueryHandler : IRequestHandler<GetSubordinatesByUserIdQuery, Result<SubordinatesDto>>
 {
     private readonly IUserRepository _repo;
 
@@ -17,13 +19,17 @@ public sealed class GetSubordinatesByUserIdQueryHandler : IRequestHandler<GetSub
 
     public async Task<Result<SubordinatesDto>> Handle(GetSubordinatesByUserIdQuery request, CancellationToken ct)
     {
+        if (await _repo.GetUserByIdAsync(request.Id, ct) is null)
+        {
+            return Result<SubordinatesDto>.Failure(Error.NotFound($"User with id {request.Id} not found."));
+        }
+        
         var subordinates = await _repo.GetSubordinatesByUserIdAsync(request.Id, ct);
-
-        //TODO: Обработка и разделени ошибок (SP-24)
+        
         return Result<SubordinatesDto>.Success(
             new SubordinatesDto(
-                subordinates.Select(s => s.ToDto())
-                    .ToList())
-        );
+                subordinates
+                    .Select(s => s.ToDto())
+                    .ToList()));
     }
 }
