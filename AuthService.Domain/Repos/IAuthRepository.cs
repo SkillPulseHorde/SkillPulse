@@ -1,0 +1,16 @@
+﻿using AuthService.Domain.Entities;
+
+namespace AuthService.Domain.Repos;
+
+public interface IAuthRepository
+{
+    Task PostRegistrationAsync(User user, CancellationToken ct = default);
+    
+    Task<User?> GetUserByEmailAsync(string email, CancellationToken ct = default);
+    
+    Task<User?> GetUserByRefreshTokenAsync(string refreshToken, CancellationToken ct = default);
+    
+    Task UpdateUserAsync(User user, CancellationToken ct = default);
+    
+    Task<User?> GetUserByUserIdAsync(Guid userId, CancellationToken ct = default);
+}

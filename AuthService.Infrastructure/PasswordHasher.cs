@@ -4,7 +4,6 @@ namespace AuthService.Infrastructure;
 
 public class PasswordHasher : IPasswordHasher
 {
-    // Все таки используем BCrypt. Скачал из NuGet
     public string GeneratePasswordHash(string password) =>
         BCrypt.Net.BCrypt.EnhancedHashPassword(password);
     
