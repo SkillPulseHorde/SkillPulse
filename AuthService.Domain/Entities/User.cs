@@ -13,4 +13,10 @@ public class User
         RefreshToken = null;
         RefreshTokenExpiryTime = null;
     }
+    
+    public void SetRefreshToken(string refreshToken, DateTimeOffset expiryTime)
+    {
+        RefreshToken = refreshToken;
+        RefreshTokenExpiryTime = expiryTime;
+    }
 }

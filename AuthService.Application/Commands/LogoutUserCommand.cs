@@ -22,7 +22,7 @@ public sealed class LogoutUserCommandHandler : IRequestHandler<LogoutUserCommand
         
         var user = await _authRepository.GetUserByUserIdAsync(userId, cancellationToken);
         if (user  == null)
-            return Result<string>.Failure(Error.NotFound("Общая ошибка"));
+            return Result<string>.Failure(Error.NotFound("Пользователь не найден"));
         
         user.ClearRefreshToken();
         
@@ -37,9 +37,9 @@ public class LogoutUserCommandValidator : AbstractValidator<LogoutUserCommand>
     public LogoutUserCommandValidator()
     {
         RuleFor(x => x.UserId)
-            .NotNull().WithMessage("GUID необходим")
-            .NotEmpty().WithMessage("GUID не должен быть пустым")
-            .Must(IsValidGuid).WithMessage("Некорректный GUID");
+            .NotNull().WithMessage("Не передан UserId")
+            .NotEmpty().WithMessage("Передан пустой UserId")
+            .Must(IsValidGuid).WithMessage("Некорректный формат UserId");
     }
 
     private bool IsValidGuid(string userId)

@@ -47,15 +47,16 @@ public class CreateRegistrationCommandValidator : AbstractValidator<CreateRegist
     public CreateRegistrationCommandValidator()
     {
         RuleFor(x => x.Email)
-            .NotNull().WithMessage("Почта необходима")
-            .NotEmpty().WithMessage("Почта не должна быть пустым")
-            .EmailAddress().WithMessage("Некорректный формат email.")
-            .MaximumLength(255).WithMessage("email должен быть не более 255 символов.");
+            .NotNull().WithMessage("Не передан Email")
+            .NotEmpty().WithMessage("Передан пустой Email")
+            .EmailAddress().WithMessage("Некорректный формат Email.")
+            .MaximumLength(255).WithMessage("Email должен быть не более 255 символов.");
         RuleFor(x => x.Password)
-            .NotNull().WithMessage("пароль необходим")
-            .NotEmpty().WithMessage("Пароль не должен быть пустым")
-            .MinimumLength(4).WithMessage("Пароль должен быть не менее 4 символов.")
-            .MaximumLength(512).WithMessage("Пароль должен быть не более 100 символов.")
-            .Matches(@"^(?!.*\s)(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\w\s]).+$");
+            .NotNull().WithMessage("Не передан Password")
+            .NotEmpty().WithMessage("Передан пустой Password")
+            .MinimumLength(4).WithMessage("Password должен быть не менее 4 символов.")
+            .MaximumLength(512).WithMessage("Password должен быть не более 512 символов.")
+            .Matches(@"^(?!.*\s)(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\w\s]).+$")
+                .WithMessage("Некорректный формат Password.");
     }
 }

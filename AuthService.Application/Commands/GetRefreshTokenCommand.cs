@@ -25,15 +25,17 @@ public sealed class GetRefreshTokenCommandHandler : IRequestHandler<GetRefreshTo
         
         var user = await _authRepository.GetUserByRefreshTokenAsync(request.RefreshToken, cancellationToken);
         if (user is null)
-            return Result<TokenResponse>.Failure(Error.Unauthorized("Общая ошибка"));
+            return Result<TokenResponse>.Failure(Error.Unauthorized("Ошибка авторизации"));
         if (user.RefreshTokenExpiryTime < DateTimeOffset.UtcNow)
             return Result<TokenResponse>.Failure(Error.Unauthorized("Токен истек"));
         
         var accessToken = _jwtProvider.GenerateAccessToken(user);
         var refreshToken = _jwtProvider.GenerateRefreshToken();
 
-        user.RefreshToken = refreshToken;
-        user.RefreshTokenExpiryTime = DateTimeOffset.UtcNow.AddHours(_jwtProvider.GetRefreshExpiresHours());
+        user.SetRefreshToken(
+            refreshToken,
+            DateTimeOffset.UtcNow.AddHours(_jwtProvider.GetRefreshExpiresHours())
+        );
 
         await _authRepository.UpdateUserAsync(user, cancellationToken);
 
@@ -52,7 +54,7 @@ public class GetRefreshTokenCommandValidator : AbstractValidator<GetRefreshToken
     public GetRefreshTokenCommandValidator()
     {
         RuleFor(x => x.RefreshToken)
-            .NotNull().WithMessage("Токен необходим")
-            .NotEmpty().WithMessage("Токен не должен быть пустым");
+            .NotNull().WithMessage("Не передан RefreshToken")
+            .NotEmpty().WithMessage("Передан пустой RefreshToken");
     }
 }
