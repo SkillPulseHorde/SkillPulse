@@ -18,7 +18,7 @@ public sealed class GetUserByIdQueryHandler : IRequestHandler<GetUserByIdQuery, 
 
     public async Task<Result<UserModel>> Handle(GetUserByIdQuery request, CancellationToken ct)
     {
-        var user = await _repo.GetUserByIdAsync(request.Id, ct);
+        var user = await _repo.GetUserReadonlyByIdAsync(request.Id, ct);
 
         return user is null 
             ? Result<UserModel>.Failure(Error.NotFound($"Пользователь с id {request.Id} не найден.")) 

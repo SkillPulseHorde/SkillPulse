@@ -14,7 +14,7 @@ public sealed class UserRepository : IUserRepository
         _dbContext = userDbContext;
     }
     
-    public async Task<User?> GetUserByIdAsync(Guid id, CancellationToken ct = default)
+    public async Task<User?> GetUserReadonlyByIdAsync(Guid id, CancellationToken ct = default)
     {
         return await _dbContext.Users
             .AsNoTracking()
@@ -31,7 +31,7 @@ public async Task<Guid?> GetUserIdByEmailAsync(string email, CancellationToken c
         .FirstOrDefaultAsync(ct);
 }
 
-    public async Task<List<User>> GetSubordinatesByUserIdAsync(Guid managerId, CancellationToken ct = default)
+    public async Task<List<User>> GetSubordinatesReadonlyByUserIdAsync(Guid managerId, CancellationToken ct = default)
     {
         return await _dbContext.Users
             .Where(u => u.ManagerId == managerId)

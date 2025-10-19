@@ -24,19 +24,19 @@
     depends_on:
       - user-postgres
       
-    user-postgres:
-      image: postgres:15
-      environment:
-        POSTGRES_USER: ${POSTGRES_USER}
-        POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-        POSTGRES_DB: users
-      ports:
-        - "5433:5432"
-      volumes:
-        - pgdata:/var/lib/postgresql/data
-          
-          
-      
+  user-postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: users
+    ports:
+      - "5433:5432"
+    volumes:
+      - user_pgdata:/var/lib/postgresql/data
+  
+  
+  
   authservice:
     build:
       context: ./
@@ -50,17 +50,17 @@
       - ConnectionStrings__AuthDb=Host=auth-postgres;Port=5432;Database=auth;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
     depends_on:
       - auth-postgres
-      
-    auth-postgres:
-      image: postgres:15
-      environment:
-        POSTGRES_USER: ${POSTGRES_USER}
-        POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-        POSTGRES_DB: auth
-      ports:
-        - "5434:5432"
-      volumes:
-        - auth_pgdata:/var/lib/postgresql/data
+    
+  auth-postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: auth
+    ports:
+      - "5434:5432"
+    volumes:
+      - auth_pgdata:/var/lib/postgresql/data
         
 
         
@@ -87,7 +87,6 @@
       - "5435:5432"
     volumes:
       - assessment_pgdata:/var/lib/postgresql/data
-      - user_pgdata:/var/lib/postgresql/data
         
 
 

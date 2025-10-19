@@ -46,7 +46,6 @@ public class CreateAssessmentCommandValidator : AbstractValidator<CreateAssessme
     public CreateAssessmentCommandValidator()
     {
         RuleFor(x => x.EvaluateeId).NotEmpty();
-        RuleFor(x => x.StartAt).LessThan(x => x.EndsAt).WithMessage("StartAt must be earlier than EndsAt");
-        RuleFor(x => x.EndsAt).GreaterThan(x => x.StartAt).WithMessage("EndsAt must be later than StartAt");
+        RuleFor(x => x.StartAt).LessThan(x => x.EndsAt).WithMessage("StartAt должно быть раньше, чем  EndsAt");
     }
 }

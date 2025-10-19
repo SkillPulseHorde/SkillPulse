@@ -3,9 +3,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddReverseProxy()
     .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
 
+
 var app = builder.Build();
 
-app.MapGet("/ping", () => Results.Text("pong")); // TODO: Тест, потом убрать 
 
 app.UseSwaggerUI(c =>
 {
@@ -13,6 +13,8 @@ app.UseSwaggerUI(c =>
     c.SwaggerEndpoint("/swagger/assessmentservice/swagger.json", "AssessmentService");
     c.SwaggerEndpoint("/swagger/authservice/swagger.json", "AuthService");
 });
+
+app.MapGet("/ping", () => Results.Text("pong")); // TODO: Тест, потом убрать 
 
 app.MapReverseProxy();
 

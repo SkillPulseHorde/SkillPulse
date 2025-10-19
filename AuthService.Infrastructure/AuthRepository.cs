@@ -41,7 +41,7 @@ public class AuthRepository : IAuthRepository
             .FirstOrDefaultAsync(u => u.RefreshToken == refreshToken, ct);
     }
 
-    public async Task<User?> GetUserByUserIdAsync(Guid userId, CancellationToken ct = default)
+    public async Task<User?> GetUserByIdAsync(Guid userId, CancellationToken ct = default)
     {
         return await _dbContext.Users
             .AsNoTracking()

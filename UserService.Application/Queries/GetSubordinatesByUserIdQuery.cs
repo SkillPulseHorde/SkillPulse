@@ -18,12 +18,12 @@ internal sealed class GetSubordinatesByUserIdQueryHandler : IRequestHandler<GetS
 
     public async Task<Result<SubordinatesModel>> Handle(GetSubordinatesByUserIdQuery request, CancellationToken ct)
     {
-        if (await _repo.GetUserByIdAsync(request.Id, ct) is null)
+        if (await _repo.GetUserReadonlyByIdAsync(request.Id, ct) is null)
         {
             return Result<SubordinatesModel>.Failure(Error.NotFound($"Пользователь с id {request.Id} не найден."));
         }
         
-        var subordinates = await _repo.GetSubordinatesByUserIdAsync(request.Id, ct);
+        var subordinates = await _repo.GetSubordinatesReadonlyByUserIdAsync(request.Id, ct);
         
         return Result<SubordinatesModel>.Success(
             new SubordinatesModel(

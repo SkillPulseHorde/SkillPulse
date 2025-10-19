@@ -20,8 +20,8 @@ public sealed class LogoutUserCommandHandler : IRequestHandler<LogoutUserCommand
     {
         var userId = Guid.Parse(request.UserId);
         
-        var user = await _authRepository.GetUserByUserIdAsync(userId, cancellationToken);
-        if (user  == null)
+        var user = await _authRepository.GetUserByIdAsync(userId, cancellationToken);
+        if (user == null)
             return Result<string>.Failure(Error.NotFound("Пользователь не найден"));
         
         user.ClearRefreshToken();

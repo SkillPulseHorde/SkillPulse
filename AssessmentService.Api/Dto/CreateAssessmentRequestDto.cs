@@ -6,5 +6,5 @@ public sealed record CreateAssessmentRequestDto
     public required DateTime StartAt { get; init; }
     public required DateTime EndsAt { get; init; }
     
-    public Guid CreatedByUserId { get; init; }
+    public required Guid CreatedByUserId { get; init; }
 }

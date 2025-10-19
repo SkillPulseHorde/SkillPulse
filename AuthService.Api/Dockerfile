@@ -9,7 +9,7 @@ WORKDIR /src
 COPY ["AuthService.Api/AuthService.Api.csproj", "AuthService.Api/"]
 COPY ["AuthService.Application/AuthService.Application.csproj", "AuthService.Application/"]
 COPY ["AuthService.Infrastructure/AuthService.Infrastructure.csproj", "AuthService.Infrastructure/"]
-#COPY ["AuthService.Domain/AuthService.Domain.csproj", "AuthService.Domain/"]
+COPY ["AuthService.Domain/AuthService.Domain.csproj", "AuthService.Domain/"]
 RUN dotnet restore "AuthService.Api/AuthService.Api.csproj"
 COPY . .
 RUN dotnet build "AuthService.Api/AuthService.Api.csproj" -c $BUILD_CONFIGURATION -o /app/build
