@@ -1,13 +1,13 @@
 ﻿using Common;
 using MediatR;
-using UserService.Application.Dto;
+using UserService.Application.Models;
 using UserService.Domain.Repos;
 
 namespace UserService.Application.Queries;
 
-public sealed record GetUserByIdQuery(Guid Id) : IRequest<Result<UserDto>>;
+public sealed record GetUserByIdQuery(Guid Id) : IRequest<Result<UserModel>>;
 
-public sealed class GetUserByIdQueryHandler : IRequestHandler<GetUserByIdQuery, Result<UserDto>>
+public sealed class GetUserByIdQueryHandler : IRequestHandler<GetUserByIdQuery, Result<UserModel>>
 {
     private readonly IUserRepository _repo;
 
@@ -16,12 +16,12 @@ public sealed class GetUserByIdQueryHandler : IRequestHandler<GetUserByIdQuery, 
         _repo = repo;
     }
 
-    public async Task<Result<UserDto>> Handle(GetUserByIdQuery request, CancellationToken ct)
+    public async Task<Result<UserModel>> Handle(GetUserByIdQuery request, CancellationToken ct)
     {
         var user = await _repo.GetUserByIdAsync(request.Id, ct);
 
         return user is null 
-            ? Result<UserDto>.Failure(Error.NotFound($"User with id {request.Id} not found.")) 
-            : Result<UserDto>.Success(user.ToDto());
+            ? Result<UserModel>.Failure(Error.NotFound($"Пользователь с id {request.Id} не найден.")) 
+            : Result<UserModel>.Success(user.ToAppModel());
     }
 }

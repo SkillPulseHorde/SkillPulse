@@ -1,23 +1,34 @@
 ﻿namespace Common;
 
-public class Result<T>
+public class Result
 {
     public bool IsSuccess { get; }
-    public T? Value { get; }
     public Error? Error { get; }
 
-    private Result(T value)
+    protected Result(bool isSuccess, Error? error)
     {
-        IsSuccess = true;
-        Value = value;
-    }
-
-    private Result(Error error)
-    {
-        IsSuccess = false;
+        IsSuccess = isSuccess;
         Error = error;
     }
 
+    public static Result Success() => new(true, null);
+    public static Result Failure(Error error) => new(false, error);
+}
+
+public class Result<T> : Result
+{
+    public T? Value { get; }
+
+    private Result(T value) : base(true, null)
+    {
+        Value = value;
+    }
+
+    private Result(Error error) : base(false, error)
+    {
+        Value = default;
+    }
+
     public static Result<T> Success(T value) => new(value);
-    public static Result<T> Failure(Error error) => new(error);
+    public new static Result<T> Failure(Error error) => new(error);
 }

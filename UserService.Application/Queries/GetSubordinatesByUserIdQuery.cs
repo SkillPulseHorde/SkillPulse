@@ -1,14 +1,13 @@
-﻿
-using Common;
+﻿using Common;
 using MediatR;
-using UserService.Application.Dto;
+using UserService.Application.Models;
 using UserService.Domain.Repos;
 
 namespace UserService.Application.Queries;
 
-public sealed record GetSubordinatesByUserIdQuery(Guid Id) : IRequest<Result<SubordinatesDto>>;
+public sealed record GetSubordinatesByUserIdQuery(Guid Id) : IRequest<Result<SubordinatesModel>>;
 
-internal sealed class GetSubordinatesByUserIdQueryHandler : IRequestHandler<GetSubordinatesByUserIdQuery, Result<SubordinatesDto>>
+internal sealed class GetSubordinatesByUserIdQueryHandler : IRequestHandler<GetSubordinatesByUserIdQuery, Result<SubordinatesModel>>
 {
     private readonly IUserRepository _repo;
 
@@ -17,19 +16,19 @@ internal sealed class GetSubordinatesByUserIdQueryHandler : IRequestHandler<GetS
         _repo = repo;
     }
 
-    public async Task<Result<SubordinatesDto>> Handle(GetSubordinatesByUserIdQuery request, CancellationToken ct)
+    public async Task<Result<SubordinatesModel>> Handle(GetSubordinatesByUserIdQuery request, CancellationToken ct)
     {
         if (await _repo.GetUserByIdAsync(request.Id, ct) is null)
         {
-            return Result<SubordinatesDto>.Failure(Error.NotFound($"User with id {request.Id} not found."));
+            return Result<SubordinatesModel>.Failure(Error.NotFound($"Пользователь с id {request.Id} не найден."));
         }
         
         var subordinates = await _repo.GetSubordinatesByUserIdAsync(request.Id, ct);
         
-        return Result<SubordinatesDto>.Success(
-            new SubordinatesDto(
+        return Result<SubordinatesModel>.Success(
+            new SubordinatesModel(
                 subordinates
-                    .Select(s => s.ToDto())
+                    .Select(s => s.ToAppModel())
                     .ToList()));
     }
 }

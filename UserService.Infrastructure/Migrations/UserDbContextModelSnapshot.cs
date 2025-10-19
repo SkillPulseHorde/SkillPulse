@@ -4,7 +4,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
-using UserService.Infrastructure;
 using UserService.Infrastructure.Db;
 
 #nullable disable
@@ -29,9 +28,19 @@ namespace UserService.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("Email")
+                        .HasColumnType("text");
+
                     b.Property<string>("FirstName")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<string>("Grade")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("NA");
 
                     b.Property<string>("LastName")
                         .IsRequired()
@@ -49,6 +58,9 @@ namespace UserService.Infrastructure.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)")
                         .HasDefaultValue("NotDefined");
+
+                    b.Property<string>("TeamName")
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 

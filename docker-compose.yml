@@ -8,6 +8,10 @@
     depends_on:
       - userservice
 
+
+
+
+
   userservice:
     build:
       context: ./
@@ -17,9 +21,9 @@
     environment:
       - ConnectionStrings__UserDb=Host=postgres;Port=5432;Database=users;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
     depends_on:
-      - postgres
+      - user-postgres
         
-  postgres:
+  user-postgres:
     image: postgres:15
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
@@ -29,6 +33,35 @@
       - "5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+        
+        
+        
+        
+        
+  assessmentservice:
+    build:
+      context: ./
+      dockerfile: AssessmentService.Api/Dockerfile
+    ports:
+      - "5003:8080"
+    environment:
+      - ConnectionStrings__UserDb=Host=postgres;Port=5432;Database=assessments;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+    depends_on:
+      - assessment-postgres
+        
+  assessment-postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: assessments
+    ports:
+      - "5435:5432"
+    volumes:
+      - assessment_pgdata:/var/lib/postgresql/data
+
+
 
 volumes:
   pgdata:
+  assessment_pgdata:

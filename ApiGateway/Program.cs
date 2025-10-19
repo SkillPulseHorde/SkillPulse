@@ -1,7 +1,5 @@
-using Yarp.ReverseProxy.Transforms;
-
 var builder = WebApplication.CreateBuilder(args);
-builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+//builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
 
 builder.Services.AddReverseProxy()
     .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
@@ -13,7 +11,7 @@ app.MapGet("/ping", () => Results.Text("pong")); // TODO: Тест, потом �
 app.UseSwaggerUI(c =>
 {
     c.SwaggerEndpoint("/swagger/userservice/swagger.json", "UserService");
-    //c.SwaggerEndpoint("/swagger/otherservice/swagger.json", "OtherService");
+    c.SwaggerEndpoint("/swagger/assessmentservice/swagger.json", "AssessmentService");
 });
 
 app.MapReverseProxy();
