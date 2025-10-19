@@ -4,3 +4,6 @@ obj/
 riderModule.iml
 /_ReSharper.Caches/
 .env
+AuthService.Api/AuthService.Api.http
+UserService.Api/UserService.http
+ApiGateway/ApiGateway.http

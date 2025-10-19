@@ -13,11 +13,9 @@ RUN dotnet restore "UserService.Api/UserService.Api.csproj"
 COPY . .
 RUN dotnet build "UserService.Api/UserService.Api.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
-
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
 RUN dotnet publish "UserService.Api/UserService.Api.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
-
 
 FROM base AS final
 WORKDIR /app

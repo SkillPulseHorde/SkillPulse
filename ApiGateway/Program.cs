@@ -1,5 +1,4 @@
 var builder = WebApplication.CreateBuilder(args);
-//builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
 
 builder.Services.AddReverseProxy()
     .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
@@ -12,6 +11,7 @@ app.UseSwaggerUI(c =>
 {
     c.SwaggerEndpoint("/swagger/userservice/swagger.json", "UserService");
     c.SwaggerEndpoint("/swagger/assessmentservice/swagger.json", "AssessmentService");
+    c.SwaggerEndpoint("/swagger/authservice/swagger.json", "AuthService");
 });
 
 app.MapReverseProxy();
