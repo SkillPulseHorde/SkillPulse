@@ -13,7 +13,7 @@ app.MapGet("/ping", () => Results.Text("pong")); // TODO: Тест, потом �
 app.UseSwaggerUI(c =>
 {
     c.SwaggerEndpoint("/swagger/userservice/swagger.json", "UserService");
-    //c.SwaggerEndpoint("/swagger/otherservice/swagger.json", "OtherService");
+    c.SwaggerEndpoint("/swagger/authservice/swagger.json", "AuthService");
 });
 
 app.MapReverseProxy();

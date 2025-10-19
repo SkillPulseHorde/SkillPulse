@@ -17,5 +17,9 @@ public class Error
     public static Error Validation(string msg) =>
         new($"validation_error", msg);
     
-    // Дальше можно добавлять свои переиспользуемые ошибки [[убрать коммент при сдаче]]
+    public static Error Conflict(string msg) =>
+        new($"conflict", msg);
+    
+    public static Error Unauthorized(string msg) =>
+        new($"unauthorized", msg);
 }
