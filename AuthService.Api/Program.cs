@@ -24,21 +24,23 @@ builder.Services.AddDbContext<AuthDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("AuthDb")));
 
 builder.Configuration.AddEnvironmentVariables();
-builder.Services.Configure<JwtOptions>(option => {
+builder.Services.Configure<JwtOptions>(option => 
+{
     option.SecretKey = builder.Configuration["JWT_SECRET_KEY"]
         ?? throw new InvalidOperationException("Invalid JWT_SECRET_KEY value");
     
     option.AccessExpiresHours = int.TryParse(builder.Configuration["JWT_ACCESS_EXPIRES_HOURS"], out var accHours)
-        ?  accHours
+        ? accHours
         : throw new InvalidOperationException("Invalid JWT_ACCESS_EXPIRES_HOURS value");
     
     option.RefreshExpiresHours = int.TryParse(builder.Configuration["JWT_REFRESH_EXPIRES_HOURS"], out var refHours)
-        ?  refHours
+        ? refHours
         : throw new InvalidOperationException("Invalid JWT_REFRESH_EXPIRES_HOURS value");
 });
 
 builder.Services.AddAuthorization();
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options => {
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options => 
+{
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuerSigningKey = true,
@@ -54,7 +56,7 @@ builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<IJwtProvider, JwtProvider>();
 
-builder.Services.AddScoped<IValidator<CreateRegistrationCommand>, CreateRegistrationCommandValidator>();//TODO заменить на нормальную валидацию
+builder.Services.AddScoped<IValidator<CreateRegistrationCommand>, CreateRegistrationCommandValidator>(); //TODO заменить на нормальную валидацию
 builder.Services.AddScoped<IValidator<AuthenticateUserCommand>, AuthenticateUserCommandValidator>();
 builder.Services.AddScoped<IValidator<GetRefreshTokenCommand>, GetRefreshTokenCommandValidator>();
 builder.Services.AddScoped<IValidator<LogoutUserCommand>, LogoutUserCommandValidator>();

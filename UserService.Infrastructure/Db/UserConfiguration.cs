@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using UserService.Domain.Entities;
 
-namespace UserService.Infrastructure;
+namespace UserService.Infrastructure.Db;
 
 public class UserConfiguration : IEntityTypeConfiguration<User>
 {
@@ -21,5 +21,10 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .HasConversion<string>() 
             .HasMaxLength(50)
             .HasDefaultValue(Position.NotDefined);
+        
+        builder.Property(u => u.Grade)
+            .HasConversion<string>() 
+            .HasMaxLength(20)
+            .HasDefaultValue(Grade.NA);
     }
 }

@@ -2,11 +2,11 @@ using System.Text.Json.Serialization;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using UserService;
-using UserService.Application;
+using UserService.Application.Models;
 using UserService.Application.Queries;
 using UserService.Domain.Repos;
-using UserService.Infrastructure;
 using UserService.Infrastructure.Db;
+using UserService.Infrastructure.Repos;
 
 #region di
 var builder = WebApplication.CreateBuilder(args);
@@ -15,7 +15,7 @@ builder.Services.AddDbContext<UserDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("UserDb")));
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
-builder.Services.AddScoped<UserServiceApp>();
+//builder.Services.AddValidatorsFromAssembly(Assembly.Load("MyProject.Application"));
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -38,23 +38,41 @@ app.UseSwaggerUI();
 #endregion
 
 #region endpoints
-app.MapGet("/api/users/{id}", async (Guid id, IMediator mediator, CancellationToken ct) =>
+app.MapGet("/api/users/{id:guid}", async (Guid id, IMediator mediator, CancellationToken ct) =>
 {
     var result = await mediator.Send(new GetUserByIdQuery(id), ct);
     
     return result.IsSuccess 
         ? Results.Ok(result.Value) 
         : result.Error.ToProblemDetails();
-});
+})
+.Produces<UserModel>()
+.WithSummary("Получить пользователя по ID");;
 
-app.MapGet("/api/users/{id}/subordinates", async (Guid id, IMediator mediator, CancellationToken ct) =>
+
+app.MapGet("/api/users/{email}/id", async (string email, IMediator mediator, CancellationToken ct) =>
+{
+    var result = await mediator.Send(new GetUserIdByEmailQuery(email), ct);
+    
+    return result.IsSuccess 
+        ? Results.Ok(result.Value) 
+        : result.Error.ToProblemDetails();
+})
+.Produces<Guid>()
+.WithSummary("Получить идентификатор пользователя по email")
+.WithDescription("Возвращает только GUID пользователя.");
+
+
+app.MapGet("/api/users/{id:guid}/subordinates", async (Guid id, IMediator mediator, CancellationToken ct) =>
 {
     var result = await mediator.Send(new GetSubordinatesByUserIdQuery(id), ct);
 
     return result.IsSuccess
         ? Results.Ok(result.Value)
         : result.Error.ToProblemDetails();
-});
+})
+.Produces<List<UserModel>>()
+.WithSummary("Получить подчиненных пользователя по его ID");
 #endregion
 
 app.Run();

@@ -8,7 +8,6 @@ namespace UserService.Infrastructure.Db
     {
         public UserDbContext CreateDbContext(string[] args)
         {
-            // Читаем конфиг
             var config = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.json", optional: false)
