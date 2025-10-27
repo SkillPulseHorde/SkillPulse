@@ -1,6 +1,6 @@
 ﻿namespace UserService.Domain.Entities;
 
-public record User
+public class User
 {
     public Guid Id { get; init; } = Guid.NewGuid();
 

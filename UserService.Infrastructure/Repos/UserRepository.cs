@@ -13,7 +13,19 @@ public sealed class UserRepository : IUserRepository
     {
         _dbContext = userDbContext;
     }
-    
+
+    public async Task<List<User>> GetAllUsersReadonlyAsync(Guid currentUserId, string? teamName, CancellationToken ct = default)
+    {
+        return await _dbContext.Users
+            .AsNoTracking()
+            .Where(u => u.Id != currentUserId)
+            .OrderByDescending(u => u.TeamName == teamName)
+            .ThenBy(u => u.TeamName == null)
+            .ThenBy(u => u.TeamName)
+            .ThenBy(u => u.LastName)
+            .ToListAsync(ct);
+    }
+
     public async Task<User?> GetUserReadonlyByIdAsync(Guid id, CancellationToken ct = default)
     {
         return await _dbContext.Users
@@ -37,5 +49,20 @@ public async Task<Guid?> GetUserIdByEmailAsync(string email, CancellationToken c
             .Where(u => u.ManagerId == managerId)
             .AsNoTracking()
             .ToListAsync(ct);
+    }
+    
+    public async Task<bool> AreUsersExistAsync(List<Guid> userIds, CancellationToken ct = default)
+    {
+        if (userIds.Count == 0)
+            return true;
+        
+        var foundCount = await _dbContext.Users
+            .AsNoTracking()
+            .Where(u => userIds.Contains(u.Id))
+            .Select(u => u.Id)
+            .Distinct()
+            .CountAsync(ct);
+
+        return foundCount == userIds.Count;
     }
 }

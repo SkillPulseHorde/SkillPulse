@@ -13,6 +13,8 @@ public class AssessmentDbContext : DbContext
     public DbSet<Competence> Competences => Set<Competence>();
     public DbSet<Criterion> Criteria => Set<Criterion>();
     public DbSet<UserEvaluator> UserEvaluators => Set<UserEvaluator>();
+    public DbSet<AssessmentEvaluator> AssessmentEvaluators => Set<AssessmentEvaluator>();
+
 
     public AssessmentDbContext(DbContextOptions<AssessmentDbContext> options) : base(options)
     {

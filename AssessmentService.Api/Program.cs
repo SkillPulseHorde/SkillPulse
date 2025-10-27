@@ -2,9 +2,12 @@ using System.Text.Json.Serialization;
 using AssessmentService.Api;
 using AssessmentService.Api.Dto;
 using AssessmentService.Application.Commands;
+using AssessmentService.Application.Queries;
+using AssessmentService.Application.ServiceClientsAbstract;
 using AssessmentService.Domain.Repos;
 using AssessmentService.Infrastructure.Db;
 using AssessmentService.Infrastructure.Repos;
+using AssessmentService.Infrastructure.ServiceClients;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -17,6 +20,18 @@ builder.Services.AddDbContext<AssessmentDbContext>(options =>
 
 builder.Services.AddScoped<IAssessmentRepository, AssessmentRepository>();
 builder.Services.AddScoped<IEvaluationRepository, EvaluationRepository>();
+
+builder.Services.AddHttpClient<IUserServiceClient, UserServiceClient>((sp, client) =>
+{
+    var configuration = sp.GetRequiredService<IConfiguration>();
+    var baseUrl = configuration["Services:UserService"];
+
+    if (string.IsNullOrWhiteSpace(baseUrl))
+        throw new InvalidOperationException("UserService URL is not configured.");
+
+    client.BaseAddress = new Uri(baseUrl);
+});
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -55,8 +70,46 @@ app.MapPost("/api/assessments", async (
     
     return result.IsSuccess 
         ? Results.Ok(result.Value) 
-        : result.Error.ToProblemDetails();
+        : result.Error!.ToProblemDetails();
 });
+
+app.MapGet("/api/assessments/evaluators/{userId:guid}", async (
+    [FromRoute] Guid userId,
+    IMediator mediator,
+    CancellationToken ct) =>
+{
+    var query = new GetEvaluatorIdsByUserIdQuery(userId);
+    
+    var result = await mediator.Send(query, ct);
+    
+    return result.IsSuccess 
+        ? Results.Ok(result.Value) 
+        : result.Error!.ToProblemDetails();
+})
+.Produces<List<Guid>>()
+.WithSummary("Получить Id рецензентов пользователя по его ID");
+
+// Новый эндпоинт: обновление списка рецензентов пользователя
+app.MapPut("/api/assessments/evaluators/{userId:guid}", async (
+    [FromRoute] Guid userId,
+    [FromBody] UpdateEvaluatorsRequestDto request,
+    IMediator mediator,
+    CancellationToken ct) =>
+{
+    var command = new UpdateEvaluatorsForUserCommand
+    {
+        UserId = userId,
+        EvaluatorIds = request.EvaluatorIds ?? new List<Guid>()
+    };
+
+    var result = await mediator.Send(command, ct);
+
+    return result.IsSuccess
+        ? Results.NoContent()
+        : result.Error!.ToProblemDetails();
+})
+.Produces(StatusCodes.Status204NoContent)
+.WithSummary("Обновить список рецензентов пользователя (полная замена)");
 
 #endregion
 

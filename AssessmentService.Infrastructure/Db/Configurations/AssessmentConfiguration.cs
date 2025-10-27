@@ -15,6 +15,10 @@ public class AssessmentConfiguration : IEntityTypeConfiguration<Assessment>
         builder.HasMany(x => x.Evaluations)
             .WithOne(x => x.Assessment)
             .OnDelete(DeleteBehavior.Cascade);
+        
+        builder.HasMany(x => x.Evaluators)
+            .WithOne()
+            .OnDelete(DeleteBehavior.Cascade);
 
         // Для поиска по оцениваемому пользователю (и) за заданный период
         builder.HasIndex(x => new { x.EvaluateeId, x.StartAt, x.EndsAt });
