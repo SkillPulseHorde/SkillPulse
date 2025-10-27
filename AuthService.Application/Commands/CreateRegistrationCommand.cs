@@ -1,5 +1,4 @@
 ﻿using AuthService.Application.interfaces;
-using AuthService.Application.Models;
 using AuthService.Domain.Entities;
 using AuthService.Domain.Repos;
 using Common;
@@ -8,37 +7,46 @@ using FluentValidation;
 
 namespace AuthService.Application.Commands;
 
-public sealed record CreateRegistrationCommand (string Email, string Password) : IRequest<Result<string>>;
+public sealed record CreateRegistrationCommand(string Email, string Password) : IRequest<Result>;
 
-public sealed class CreateRegistrationCommandHandler : IRequestHandler<CreateRegistrationCommand, Result<string>>
+public sealed class CreateRegistrationCommandHandler : IRequestHandler<CreateRegistrationCommand, Result>
 {
     private readonly IPasswordHasher _passwordHasher;
     private readonly IAuthRepository _authRepository;
-    
-    public CreateRegistrationCommandHandler(IPasswordHasher passwordHasher, IAuthRepository authRepository)
+    private readonly IUserServiceClient _userServiceClient;
+
+    public CreateRegistrationCommandHandler(
+        IPasswordHasher passwordHasher,
+        IAuthRepository authRepository,
+        IUserServiceClient userServiceClient)
     {
         _passwordHasher = passwordHasher;
         _authRepository = authRepository;
+        _userServiceClient = userServiceClient;
     }
 
-    public async Task<Result<string>> Handle(CreateRegistrationCommand request, CancellationToken ct = default)
+    public async Task<Result> Handle(CreateRegistrationCommand request, CancellationToken ct = default)
     {
-        var user = await _authRepository.GetUserByEmailAsync(request.Email, ct);
+        var user = await _authRepository.GetUserByEmailReadOnlyAsync(request.Email, ct);
         if (user is not null)
-            return Result<string>.Failure(Error.Conflict("Эта почта уже используется"));
+            return Result.Failure(Error.Conflict("Эта почта уже используется"));
+
+        var userIdFromUserService = await _userServiceClient.GetUserIdByEmailAsync(request.Email, ct);
+        if (userIdFromUserService is null)
+            return Result.Failure(Error.NotFound("Пользователя с такой почтой нет в системе"));
         
         var hashedPassword = _passwordHasher.GeneratePasswordHash(request.Password);
-        
+
         var newUser = new User
         {
-            Userid = Guid.NewGuid(),
+            Userid = userIdFromUserService.Value,
             Email = request.Email,
             PasswordHash = hashedPassword
         };
-        
+
         await _authRepository.CreateRegistrationAsync(newUser, ct);
-        
-        return Result<string>.Success("");
+
+        return Result.Success();
     }
 }
 
@@ -57,6 +65,6 @@ public class CreateRegistrationCommandValidator : AbstractValidator<CreateRegist
             .MinimumLength(4).WithMessage("Password должен быть не менее 4 символов.")
             .MaximumLength(512).WithMessage("Password должен быть не более 512 символов.")
             .Matches(@"^(?!.*\s)(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\w\s]).+$")
-                .WithMessage("Некорректный формат Password.");
+            .WithMessage("Некорректный формат Password.");
     }
 }

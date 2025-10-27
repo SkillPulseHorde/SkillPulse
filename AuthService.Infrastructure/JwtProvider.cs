@@ -4,6 +4,7 @@ using System.Security.Cryptography;
 using System.Text;
 using AuthService.Application.interfaces;
 using AuthService.Domain.Entities;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
@@ -18,9 +19,13 @@ public class JwtProvider : IJwtProvider
         _jwtOptions = jwtOptions.Value;
     }
     
-    public string GenerateAccessToken(User user)
+    public string GenerateAccessToken(User user, string role)
     {
-        Claim[] claims = [new("sub", user.Userid.ToString())];
+        Claim[] claims =
+        [
+            new(ClaimTypes.NameIdentifier, user.Userid.ToString()),
+            new(ClaimsIdentity.DefaultRoleClaimType, role)
+        ];
         
         var signingCredentials = new SigningCredentials(
             new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOptions.SecretKey)),
@@ -28,7 +33,7 @@ public class JwtProvider : IJwtProvider
 
         var token = new JwtSecurityToken(
             signingCredentials: signingCredentials,
-            expires: DateTime.UtcNow.AddHours(_jwtOptions.AccessExpiresHours),
+            expires: DateTime.UtcNow.AddMinutes(_jwtOptions.AccessExpiresMinutes),
             claims: claims);
         
         var tokenValue = new JwtSecurityTokenHandler().WriteToken(token);
@@ -52,7 +57,7 @@ public class JwtProvider : IJwtProvider
 
 public class JwtOptions
 {
-    public string SecretKey { get; set; }
-    public int AccessExpiresHours { get; set; }
-    public int RefreshExpiresHours { get; set; }
+    public required string SecretKey { get; set; }
+    public required int AccessExpiresMinutes { get; set; }
+    public required int RefreshExpiresHours { get; set; }
 }

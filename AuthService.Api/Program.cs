@@ -4,17 +4,20 @@ using AuthService.Api.DTO;
 using AuthService;
 using AuthService.Application.Commands;
 using AuthService.Application.interfaces;
-//using AuthService.Application.Queries;
+using AuthService.Application.Models;
 using AuthService.Domain.Repos;
 using AuthService.Infrastructure;
+using AuthService.Infrastructure.ServiceClients;
 using AuthService.Infrastructure.Db;
+using Common;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using FluentValidation;
 using MediatR.Extensions.FluentValidation.AspNetCore;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Tokens;
+using Common.Shared.Auth.Extensions;
+using Microsoft.Extensions.Options;
+using Microsoft.OpenApi.Models;
 
 #region di
 
@@ -22,58 +25,97 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<AuthDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("AuthDb")));
-
-builder.Configuration.AddEnvironmentVariables();
-builder.Services.Configure<JwtOptions>(option => 
+ 
+builder.Services.Configure<JwtOptions>(option =>
 {
     option.SecretKey = builder.Configuration["JWT_SECRET_KEY"]
-        ?? throw new InvalidOperationException("Invalid JWT_SECRET_KEY value");
-    
-    option.AccessExpiresHours = int.TryParse(builder.Configuration["JWT_ACCESS_EXPIRES_HOURS"], out var accHours)
-        ? accHours
-        : throw new InvalidOperationException("Invalid JWT_ACCESS_EXPIRES_HOURS value");
-    
+                       ?? throw new InvalidOperationException("JWT_SECRET_KEY не найден");
+    if (Encoding.UTF8.GetByteCount(option.SecretKey) < 32)
+        throw new InvalidOperationException("JWT_SECRET_KEY должен быть не менее 32 символа");
+
+    option.AccessExpiresMinutes = int.TryParse(builder.Configuration["JWT_ACCESS_EXPIRES_MINUTES"], out var accMinutes)
+        ? accMinutes
+        : throw new InvalidOperationException("JWT_ACCESS_EXPIRES_HOURS не найден");
+
     option.RefreshExpiresHours = int.TryParse(builder.Configuration["JWT_REFRESH_EXPIRES_HOURS"], out var refHours)
         ? refHours
-        : throw new InvalidOperationException("Invalid JWT_REFRESH_EXPIRES_HOURS value");
+        : throw new InvalidOperationException("JWT_REFRESH_EXPIRES_HOURS не найден");
 });
 
-builder.Services.AddAuthorization();
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options => 
+builder.Services
+    .AddOptions<UserServiceOptions>()
+    .Bind(builder.Configuration.GetSection("UserService"))
+    .ValidateDataAnnotations()
+    .Validate(options => Uri.TryCreate(options.BaseUrl, UriKind.Absolute, out _),
+        "UserService:BaseUrl должен быть валидным URI")
+    .ValidateOnStart();
+
+builder.Services.AddHttpClient<IUserServiceClient, UserServiceClient>((sp, client) =>
 {
-    options.TokenValidationParameters = new TokenValidationParameters
-    {
-        ValidateIssuerSigningKey = true,
-        ValidateAudience = false,
-        ValidateLifetime = true,
-        ValidateIssuer = false,
-        IssuerSigningKey = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(builder.Configuration["JWT_SECRET_KEY"])),
-    };
-}); 
+    var options = sp.GetRequiredService<IOptions<UserServiceOptions>>().Value;
+    client.BaseAddress = new Uri(options.BaseUrl);
+});
+
+builder.Services.AddJwtAuthentication(options =>
+{
+    options.SecretKey = builder.Configuration["JWT_SECRET_KEY"] ?? "";
+});
+builder.Services.AddRoleBasedAuthorization();
 
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<IJwtProvider, JwtProvider>();
 
-builder.Services.AddScoped<IValidator<CreateRegistrationCommand>, CreateRegistrationCommandValidator>(); //TODO заменить на нормальную валидацию
+//TODO заменить на нормальную валидацию
+builder.Services.AddScoped<IValidator<CreateRegistrationCommand>, CreateRegistrationCommandValidator>();
 builder.Services.AddScoped<IValidator<AuthenticateUserCommand>, AuthenticateUserCommandValidator>();
 builder.Services.AddScoped<IValidator<GetRefreshTokenCommand>, GetRefreshTokenCommandValidator>();
 builder.Services.AddScoped<IValidator<LogoutUserCommand>, LogoutUserCommandValidator>();
 
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "AuthService API",
+        Version = "v1",
+        Description = "API для аутентификации и авторизации"
+    });
 
-builder.Services.AddMediatR(cfg => {
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Введите JWT токен в формате: Bearer {ваш_токен}"
+    });
+
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
+
+builder.Services.AddMediatR(cfg =>
+{
     cfg.RegisterServicesFromAssemblies(typeof(CreateRegistrationCommandHandler).Assembly);
 });
 
 builder.Services.AddFluentValidation([typeof(CreateRegistrationCommandHandler).Assembly]);
 
-builder.Services.ConfigureHttpJsonOptions(o => 
-{
-    o.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
-});
+builder.Services.ConfigureHttpJsonOptions(o => { o.SerializerOptions.Converters.Add(new JsonStringEnumConverter()); });
 
 var app = builder.Build();
 
@@ -93,35 +135,102 @@ app.MapPost("/api/auth/register", async ([FromBody] RegistrationRequest request,
 
     return result.IsSuccess
         ? Results.Ok()
-        : result.Error.ToProblemDetails();
-});
+        : result.Error!.ToProblemDetails();
+})
+.AllowAnonymous()
+.WithSummary("Зарегистрировать пользователя")
+.WithDescription("Возвращает только статус-код");
 
-app.MapPost("/api/auth/login", async ([FromBody] LoginRequest request, IMediator mediator, CancellationToken ct) =>
+app.MapPost("/api/auth/login", async ([FromBody] LoginRequest request, HttpContext httpContext, IMediator mediator, CancellationToken ct) =>
 {
     var result = await mediator.Send(new AuthenticateUserCommand(request.Email, request.Password), ct);
 
-    return result.IsSuccess
-        ? Results.Ok(result.Value)
-        : result.Error.ToProblemDetails();
-});
+    if (!result.IsSuccess)
+        return result.Error!.ToProblemDetails();
 
-app.MapPost("/api/auth/refresh", async ([FromBody] RefreshRequest request, IMediator mediator, CancellationToken ct) =>
+    var loginResponseModel = result.Value!;
+    
+    httpContext.Response.Cookies.Append("refreshToken", loginResponseModel.TokenResponse.RefreshToken, new CookieOptions
+    {
+        HttpOnly = true,
+        Secure = true,
+        SameSite = SameSiteMode.Strict,
+        Expires = DateTimeOffset.UtcNow.AddHours(int.Parse(builder.Configuration["JWT_REFRESH_EXPIRES_HOURS"]!)),
+        Path = "/api/auth"
+    });
+    
+    return Results.Ok(new
+        {
+            accessToken = loginResponseModel.TokenResponse.AccessToken,
+            userId = loginResponseModel.UserId
+        });
+})
+.Produces<LoginResponseDto>()
+.WithSummary("Войти в систему")
+.AllowAnonymous();
+
+app.MapPost("/api/auth/refresh", async (HttpContext httpContext, IMediator mediator, CancellationToken ct) =>
 {
-    var result = await mediator.Send(new GetRefreshTokenCommand(request.RefreshToken), ct);
+    if (!httpContext.Request.Cookies.TryGetValue("refreshToken", out var refreshToken))
+        return Error.Unauthorized("Отсутствует RefreshToken").ToProblemDetails();
 
-    return result.IsSuccess
-        ? Results.Ok(result.Value)
-        : result.Error.ToProblemDetails();
-}).RequireAuthorization();
+    var command = new GetRefreshTokenCommand
+    {
+        RefreshToken = refreshToken
+    };
+    
+    var result = await mediator.Send(command, ct);
 
-app.MapPost("/api/auth/logout", async ([FromBody] LogoutRequest request, IMediator mediator, CancellationToken ct) =>
-{
-    var result = await mediator.Send(new LogoutUserCommand(request.UserId), ct);
+    if (!result.IsSuccess)
+    {
+        httpContext.Response.Cookies.Delete("refreshToken", new CookieOptions
+        {
+            Path = "/api/auth"
+        });
+    
+        return result.Error!.ToProblemDetails();
+    }
 
+    var tokens = result.Value!;
+
+    httpContext.Response.Cookies.Append("refreshToken", tokens.RefreshToken, new CookieOptions
+    {
+        HttpOnly = true,
+        Secure = true,
+        SameSite = SameSiteMode.Strict,
+        Expires = DateTimeOffset.UtcNow.AddHours(int.Parse(builder.Configuration["JWT_REFRESH_EXPIRES_HOURS"]!)),
+        Path = "/api/auth"
+    });
+    
+    return Results.Ok(new { accessToken = tokens.AccessToken });
+})
+.Produces<RefreshResponseDto>()
+.WithSummary("Обновить токены")
+.WithDescription("Читает refresh token из cookie, возвращает новый access token")
+.AllowAnonymous();
+
+app.MapPost("/api/auth/logout", async (HttpContext httpContext, IMediator mediator, CancellationToken ct) =>
+    {
+    var userId = httpContext.User.GetUserId();
+    
+    var result = await mediator.Send(new LogoutUserCommand(userId), ct);
+
+    if (result.IsSuccess)
+    {
+        httpContext.Response.Cookies.Delete("refreshToken", new CookieOptions
+        {
+            Path = "/api/auth"
+        });
+    }
+    
     return result.IsSuccess
         ? Results.Ok()
-        : result.Error.ToProblemDetails();
-}).RequireAuthorization();
+        : result.Error!.ToProblemDetails();
+})
+.WithSummary("Выйти из системы")
+.WithDescription("Удаляет refresh token и инвалидирует сессию")
+.RequireAuthorization();
+
 #endregion
 
 app.Run();

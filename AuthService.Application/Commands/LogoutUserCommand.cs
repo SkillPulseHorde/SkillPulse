@@ -5,9 +5,9 @@ using MediatR;
 
 namespace AuthService.Application.Commands;
 
-public sealed record LogoutUserCommand(string UserId) : IRequest<Result<string>>;
+public sealed record LogoutUserCommand(Guid UserId) : IRequest<Result>;
 
-public sealed class LogoutUserCommandHandler : IRequestHandler<LogoutUserCommand, Result<string>>
+public sealed class LogoutUserCommandHandler : IRequestHandler<LogoutUserCommand, Result>
 {
     private readonly IAuthRepository _authRepository;
     
@@ -16,11 +16,9 @@ public sealed class LogoutUserCommandHandler : IRequestHandler<LogoutUserCommand
         _authRepository = authRepository;
     }
 
-    public async Task<Result<string>> Handle(LogoutUserCommand request, CancellationToken cancellationToken)
+    public async Task<Result> Handle(LogoutUserCommand request, CancellationToken cancellationToken)
     {
-        var userId = Guid.Parse(request.UserId);
-        
-        var user = await _authRepository.GetUserByIdAsync(userId, cancellationToken);
+        var user = await _authRepository.GetUserByIdAsync(request.UserId, cancellationToken);
         if (user == null)
             return Result<string>.Failure(Error.NotFound("Пользователь не найден"));
         
@@ -28,7 +26,7 @@ public sealed class LogoutUserCommandHandler : IRequestHandler<LogoutUserCommand
         
         await _authRepository.UpdateUserAsync(user, cancellationToken);
         
-        return Result<string>.Success("");
+        return Result.Success();
     }
 }
 
@@ -38,12 +36,6 @@ public class LogoutUserCommandValidator : AbstractValidator<LogoutUserCommand>
     {
         RuleFor(x => x.UserId)
             .NotNull().WithMessage("Не передан UserId")
-            .NotEmpty().WithMessage("Передан пустой UserId")
-            .Must(IsValidGuid).WithMessage("Некорректный формат UserId");
-    }
-
-    private bool IsValidGuid(string userId)
-    {
-        return Guid.TryParse(userId, out _);
+            .NotEmpty().WithMessage("Передан пустой UserId");
     }
 }
