@@ -1,9 +1,9 @@
 ﻿namespace AssessmentService.Domain.Entities;
 
 /// <summary>
-/// Общая информация о созданном менеджером этапе оцениваня
+/// Общая информация об аттестации
 /// </summary>
-public record Assessment
+public sealed class Assessment
 {
     public Guid Id { get; init; } = Guid.NewGuid();
     
@@ -18,6 +18,9 @@ public record Assessment
     
     // Кто запустил аттестацию
     public required Guid CreatedByUserId { get; set; }
+    
+    // Рецензенты
+    public ICollection<AssessmentEvaluator> Evaluators { get; init; } = new List<AssessmentEvaluator>();
     
     public ICollection<Evaluation> Evaluations { get; init; } = new List<Evaluation>();
 }

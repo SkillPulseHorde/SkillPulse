@@ -3,7 +3,7 @@
 /// <summary>
 /// Общая оценка пользователя
 /// </summary>
-public record Evaluation
+public class Evaluation
 {
     public required Guid Id { get; init; } = Guid.NewGuid();
 

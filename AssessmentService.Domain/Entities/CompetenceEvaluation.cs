@@ -3,7 +3,7 @@
 /// <summary>
 /// Оценка одной конкретной компетенции
 /// </summary>
-public record CompetenceEvaluation
+public class CompetenceEvaluation
 {
     public required Guid Id { get; init; }
     

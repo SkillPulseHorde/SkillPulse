@@ -1,6 +1,6 @@
 ﻿namespace AssessmentService.Domain.Entities;
 
-public record Competence
+public class Competence
 {
     public Guid Id { get; set; }
     

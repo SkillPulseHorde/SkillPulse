@@ -12,7 +12,7 @@ public record UserModel(
     string? ManagerName,
     Position Position);
 
-public static class UserDtoExtensions
+public static class UserModelExtensions
 {
     public static UserModel ToAppModel(this User user) =>
         new UserModel(

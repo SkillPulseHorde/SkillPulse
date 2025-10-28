@@ -1,6 +1,6 @@
 ﻿namespace AssessmentService.Domain.Entities;
 
-public record CriterionEvaluation
+public class CriterionEvaluation
 {
     public required Guid Id { get; init; }
     

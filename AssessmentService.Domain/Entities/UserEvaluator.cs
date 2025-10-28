@@ -3,7 +3,7 @@
 /// <summary>
 /// Оцениваемый и оценивающий пользователи
 /// </summary>
-public record UserEvaluator
+public class UserEvaluator
 {
     public Guid EvaluateeId { get; set; }
     public Guid EvaluatorId { get; set; }
