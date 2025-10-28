@@ -2,7 +2,7 @@
 using AssessmentService.Application.ServiceClientsAbstract;
 using AssessmentService.Infrastructure.Dto;
 
-namespace AssessmentService.Infrastructure.ServiceClients;
+namespace AssessmentService.Infrastructure.Http.ServiceClients;
 
 public sealed class UserServiceClient(HttpClient httpClient) : IUserServiceClient
 {

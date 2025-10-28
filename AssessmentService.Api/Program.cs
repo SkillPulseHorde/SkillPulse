@@ -3,11 +3,11 @@ using AssessmentService.Api;
 using AssessmentService.Api.Dto;
 using AssessmentService.Application.Commands;
 using AssessmentService.Application.Queries;
-using AssessmentService.Application.ServiceClientsAbstract;
 using AssessmentService.Domain.Repos;
 using AssessmentService.Infrastructure.Db;
+using AssessmentService.Infrastructure.Http.ServiceClientOptions;
+using AssessmentService.Infrastructure.Http.ServiceCollectionExtensions;
 using AssessmentService.Infrastructure.Repos;
-using AssessmentService.Infrastructure.ServiceClients;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -21,16 +21,11 @@ builder.Services.AddDbContext<AssessmentDbContext>(options =>
 builder.Services.AddScoped<IAssessmentRepository, AssessmentRepository>();
 builder.Services.AddScoped<IEvaluationRepository, EvaluationRepository>();
 
-builder.Services.AddHttpClient<IUserServiceClient, UserServiceClient>((sp, client) =>
-{
-    var configuration = sp.GetRequiredService<IConfiguration>();
-    var baseUrl = configuration["Services:UserService"];
+builder.Services.Configure<UserServiceOptions>(
+    builder.Configuration.GetSection("UserService")
+);
 
-    if (string.IsNullOrWhiteSpace(baseUrl))
-        throw new InvalidOperationException("UserService URL is not configured.");
-
-    client.BaseAddress = new Uri(baseUrl);
-});
+builder.Services.AddUserServiceClient(builder.Configuration);
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
