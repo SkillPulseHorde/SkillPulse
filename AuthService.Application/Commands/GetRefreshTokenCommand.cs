@@ -1,5 +1,6 @@
 ﻿using AuthService.Application.interfaces;
 using AuthService.Application.Models;
+using AuthService.Application.ServiceClientsAbstract;
 using AuthService.Domain.Repos;
 using Common;
 using FluentValidation;
@@ -7,29 +8,41 @@ using MediatR;
 
 namespace AuthService.Application.Commands;
 
-public sealed record GetRefreshTokenCommand(string RefreshToken) : IRequest<Result<TokenResponse>>;
+public sealed record GetRefreshTokenCommand : IRequest<Result<TokensModel>>
+{
+    public required string RefreshToken { get; init; }
+}
 
-public sealed class GetRefreshTokenCommandHandler : IRequestHandler<GetRefreshTokenCommand, Result<TokenResponse>>
+public sealed class GetRefreshTokenCommandHandler : IRequestHandler<GetRefreshTokenCommand, Result<TokensModel>>
 {
     private readonly IJwtProvider _jwtProvider;
     private readonly IAuthRepository _authRepository;
+    private readonly IUserServiceClient _userServiceClient;
 
-    public GetRefreshTokenCommandHandler(IJwtProvider jwtProvider, IAuthRepository authRepository)
+    public GetRefreshTokenCommandHandler(
+        IJwtProvider jwtProvider, 
+        IAuthRepository authRepository,
+        IUserServiceClient userServiceClient)
     {
         _jwtProvider = jwtProvider;
         _authRepository = authRepository;
+        _userServiceClient = userServiceClient;
     }
 
-    public async Task<Result<TokenResponse>> Handle(GetRefreshTokenCommand request, CancellationToken cancellationToken)
+    public async Task<Result<TokensModel>> Handle(GetRefreshTokenCommand request, CancellationToken ct)
     {
         
-        var user = await _authRepository.GetUserByRefreshTokenAsync(request.RefreshToken, cancellationToken);
+        var user = await _authRepository.GetUserByRefreshTokenAsync(request.RefreshToken, ct);
         if (user is null)
-            return Result<TokenResponse>.Failure(Error.Unauthorized("Ошибка авторизации"));
+            return Result<TokensModel>.Failure(Error.Unauthorized("Ошибка авторизации"));
         if (user.RefreshTokenExpiryTime < DateTimeOffset.UtcNow)
-            return Result<TokenResponse>.Failure(Error.Unauthorized("Токен истек"));
+            return Result<TokensModel>.Failure(Error.Unauthorized("Токен истек"));
+
+        var userFromUserService = await _userServiceClient.GetUserByIdAsync(user.Userid, ct);
+        if (userFromUserService is null)
+            return Result<TokensModel>.Failure(Error.Unauthorized("Пользователь не найден в UserService"));
         
-        var accessToken = _jwtProvider.GenerateAccessToken(user);
+        var accessToken = _jwtProvider.GenerateAccessToken(user, userFromUserService.Position);
         var refreshToken = _jwtProvider.GenerateRefreshToken();
 
         user.SetRefreshToken(
@@ -37,15 +50,15 @@ public sealed class GetRefreshTokenCommandHandler : IRequestHandler<GetRefreshTo
             DateTimeOffset.UtcNow.AddHours(_jwtProvider.GetRefreshExpiresHours())
         );
 
-        await _authRepository.UpdateUserAsync(user, cancellationToken);
+        await _authRepository.UpdateUserAsync(user, ct);
 
-        var tokenResponse = new TokenResponse()
+        var tokenResponse = new TokensModel()
         {
             AccessToken = accessToken,
             RefreshToken = refreshToken,
         };
 
-        return Result<TokenResponse>.Success(tokenResponse);
+        return Result<TokensModel>.Success(tokenResponse);
     }
 }
 

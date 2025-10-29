@@ -1,16 +1,16 @@
-﻿using AssessmentService.Application.ServiceClientsAbstract;
-using AssessmentService.Infrastructure.Http.ServiceClientOptions;
-using AssessmentService.Infrastructure.Http.ServiceClients;
+﻿using AuthService.Application.ServiceClientsAbstract;
+using AuthService.Infrastructure.Http.ServiceClientOptions;
+using AuthService.Infrastructure.Http.ServiceClients;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
-
-namespace AssessmentService.Infrastructure.Http.ServiceCollectionExtensions;
+namespace AuthService.Infrastructure.Http.ServiceCollectionExtensions;
 
 public static class UserServiceRegistration
 {
-    public static IServiceCollection AddUserServiceClient(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddUserServiceClient(this IServiceCollection services,
+        IConfiguration configuration)
     {
         services
             .AddOptions<UserServiceOptions>()
@@ -21,13 +21,13 @@ public static class UserServiceRegistration
             .Validate(options => !string.IsNullOrWhiteSpace(options.InternalToken),
                 "InternalToken должен быть передан")
             .ValidateOnStart();
-
+        
         services.AddHttpClient<IUserServiceClient, UserServiceClient>((sp, client) =>
         {
             var options = sp.GetRequiredService<IOptions<UserServiceOptions>>().Value;
             client.BaseAddress = new Uri(options.BaseUrl);
         });
-
+        
         return services;
     }
 }

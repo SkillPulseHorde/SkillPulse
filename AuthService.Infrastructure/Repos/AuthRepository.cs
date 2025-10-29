@@ -3,7 +3,7 @@ using AuthService.Domain.Entities;
 using AuthService.Domain.Repos;
 using AuthService.Infrastructure.Db;
 
-namespace AuthService.Infrastructure;
+namespace AuthService.Infrastructure.Repos;
 
 public class AuthRepository : IAuthRepository
 {
@@ -20,7 +20,7 @@ public class AuthRepository : IAuthRepository
         await _dbContext.SaveChangesAsync(ct);
     }
     
-    public async Task<User?> GetUserByEmailAsync(string email, CancellationToken ct = default)
+    public async Task<User?> GetUserByEmailReadOnlyAsync(string email, CancellationToken ct = default)
     {
         return await _dbContext.Users
             .AsNoTracking()
@@ -34,17 +34,15 @@ public class AuthRepository : IAuthRepository
         await _dbContext.SaveChangesAsync(ct);
     }
 
-    public async Task<User?> GetUserByRefreshTokenAsync(string refreshToken, CancellationToken ct = default)
-    {
-        return await _dbContext.Users
-            .AsNoTracking()
-            .FirstOrDefaultAsync(u => u.RefreshToken == refreshToken, ct);
-    }
-
     public async Task<User?> GetUserByIdAsync(Guid userId, CancellationToken ct = default)
     {
         return await _dbContext.Users
-            .AsNoTracking()
             .FirstOrDefaultAsync(u => u.Userid == userId, ct);
+    }
+
+    public async Task<User?> GetUserByRefreshTokenAsync(string refreshToken, CancellationToken ct = default)
+    {
+        return await _dbContext.Users
+            .FirstOrDefaultAsync(u => u.RefreshToken == refreshToken, ct);
     }
 }

@@ -4,7 +4,7 @@ namespace AuthService.Application.interfaces;
 
 public interface IJwtProvider
 {
-    public string GenerateAccessToken(User user);
+    public string GenerateAccessToken(User user, string role);
      
     public string GenerateRefreshToken();
     

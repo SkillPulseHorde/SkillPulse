@@ -9,6 +9,9 @@ using UserService.Domain.Repos;
 using UserService.Dto;
 using UserService.Infrastructure.Db;
 using UserService.Infrastructure.Repos;
+using Common.Shared.Auth.Extensions;
+using Microsoft.OpenApi.Models;
+using UserService.Middleware;
 
 #region di
 var builder = WebApplication.CreateBuilder(args);
@@ -16,11 +19,50 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<UserDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("UserDb")));
 
+builder.Services.AddJwtAuthentication(options =>
+{
+    options.SecretKey = builder.Configuration["JWT_SECRET_KEY"] ?? "";
+});
+builder.Services.AddRoleBasedAuthorization();
+
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 //builder.Services.AddValidatorsFromAssembly(Assembly.Load("MyProject.Application"));
 
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "UserService API",
+        Version = "v1",
+        Description = "API для аутентификации и авторизации"
+    });
+    
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Введите JWT токен в формате: Bearer {ваш_токен}"
+    });
+    
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
 
 builder.Services.AddMediatR(cfg =>
 {
@@ -37,6 +79,11 @@ var app = builder.Build();
 
 app.UseSwagger();
 app.UseSwaggerUI();
+
+app.UseMiddleware<InternalAuthMiddleware>();
+app.UseAuthentication();
+app.UseAuthorization();
+
 #endregion
 
 #region endpoints
@@ -48,36 +95,40 @@ app.MapGet("/api/users/{id:guid}", async (Guid id, IMediator mediator, Cancellat
         ? Results.Ok(result.Value) 
         : result.Error!.ToProblemDetails();
 })
+.RequireAuthorization()
 .Produces<UserModel>()
 .WithSummary("Получить пользователя по ID");
 
 
 app.MapGet("/api/users", async (
-        [FromQuery] Guid currentUserId, 
-        IMediator mediator,
-        CancellationToken ct) =>
-    {
-        var result = await mediator.Send(new GetAllUsersQuery(currentUserId), ct);
-    
-        return result.IsSuccess 
-            ? Results.Ok(result.Value.Select(u => u.ToDto()).ToList()) 
-            : result.Error!.ToProblemDetails();
-    })
-    .Produces<List<UserShortInfoDto>>()
-    .WithSummary("Получить всех пользователей, начиная со своей команды");
+    [FromQuery] Guid currentUserId, 
+    IMediator mediator,
+    CancellationToken ct) =>
+{
+    var result = await mediator.Send(new GetAllUsersQuery(currentUserId), ct);
+
+    return result.IsSuccess 
+        ? Results.Ok(result.Value.Select(u => u.ToDto()).ToList()) 
+        : result.Error!.ToProblemDetails();
+})
+.Produces<List<UserShortInfoDto>>()
+.WithSummary("Получить всех пользователей, начиная со своей команды")
+.RequireAuthorization("Authenticated");
 
 
 app.MapGet("/api/users/{email}/id", async (string email, IMediator mediator, CancellationToken ct) =>
 {
     var result = await mediator.Send(new GetUserIdByEmailQuery(email), ct);
-    
-    return result.IsSuccess 
-        ? Results.Ok(result.Value) 
+
+    return result.IsSuccess
+        ? Results.Ok(result.Value)
         : result.Error!.ToProblemDetails();
 })
+.AddEndpointFilter<RequireInternalRoleFilter>()
 .Produces<Guid>()
 .WithSummary("Получить идентификатор пользователя по email")
 .WithDescription("Возвращает только GUID пользователя.");
+//.ExcludeFromDescription(); // Для отключения в сваггере
 
 
 app.MapGet("/api/users/{id:guid}/subordinates", async (Guid id, IMediator mediator, CancellationToken ct) =>
@@ -88,13 +139,14 @@ app.MapGet("/api/users/{id:guid}/subordinates", async (Guid id, IMediator mediat
         ? Results.Ok(result.Value)
         : result.Error!.ToProblemDetails();
 })
+.RequireAuthorization("HRAndManagers")
 .Produces<List<UserModel>>()
 .WithSummary("Получить подчиненных пользователя по его ID");
 
 app.MapPost("/api/users/exist", async (
-        [FromBody] CheckUsersExistRequestDto request, 
-        IMediator mediator,
-        CancellationToken ct) =>
+    [FromBody] CheckUsersExistRequestDto request,
+    IMediator mediator,
+    CancellationToken ct) =>
 {
     var result = await mediator.Send(new AreUsersExistQuery(request.UserIds), ct);
 
@@ -102,8 +154,10 @@ app.MapPost("/api/users/exist", async (
         ? Results.Ok(result.Value)
         : result.Error!.ToProblemDetails();
 })
+.RequireAuthorization("Authenticated")
 .Produces<bool>()
-.WithSummary("Проверить существование пользователей по списку ID");
+.WithSummary("Проверить существование пользователей по списку ID")
+.AddEndpointFilter<RequireInternalRoleFilter>();
 #endregion
 
 app.Run();
