@@ -32,8 +32,7 @@ public static class Roles
     /// </summary>
     public static readonly string[] AllManagersAndHr =
     [
-        DepartmentManager,
-        ProductManager,
+        ..AllManagers,
         Hr
     ];
 
@@ -43,8 +42,6 @@ public static class Roles
     public static readonly string[] AllRoles =
     [
         Employee,
-        DepartmentManager,
-        ProductManager,
-        Hr
+        ..AllManagersAndHr
     ];
 }

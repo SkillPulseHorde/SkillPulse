@@ -1,21 +1,21 @@
 ﻿using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using AuthService.Application.interfaces;
+using AuthService.Application.ServiceClientsAbstract;
 using AuthService.Application.Models;
-using Microsoft.Extensions.Configuration;
+using AuthService.Infrastructure.Http.ServiceClientOptions;
+using Microsoft.Extensions.Options;
 
-namespace AuthService.Infrastructure.ServiceClients;
+namespace AuthService.Infrastructure.Http.ServiceClients;
 
-public class UserServiceClient : IUserServiceClient
+public sealed class UserServiceClient : IUserServiceClient
 {
     private readonly HttpClient _httpClient;
     private readonly string _internalToken;
 
-    public UserServiceClient(HttpClient httpClient, IConfiguration configuration)
+    public UserServiceClient(HttpClient httpClient, IOptions<UserServiceOptions> options)
     {
         _httpClient = httpClient;
-        _internalToken = configuration["INTERNAL_TOKEN"]
-                         ?? throw new InvalidOperationException("UserService.INTERNAL_TOKEN не найден");
+        _internalToken = options.Value.InternalToken;
     }
 
     public async Task<UserModel?> GetUserByIdAsync(Guid userId, CancellationToken ct = default)

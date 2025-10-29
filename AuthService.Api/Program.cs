@@ -4,11 +4,12 @@ using AuthService.Api.DTO;
 using AuthService;
 using AuthService.Application.Commands;
 using AuthService.Application.interfaces;
-using AuthService.Application.Models;
 using AuthService.Domain.Repos;
 using AuthService.Infrastructure;
-using AuthService.Infrastructure.ServiceClients;
 using AuthService.Infrastructure.Db;
+using AuthService.Infrastructure.Repos;
+using AuthService.Infrastructure.Http.ServiceClientOptions;
+using AuthService.Infrastructure.Http.ServiceCollectionExtensions;
 using Common;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -16,11 +17,9 @@ using FluentValidation;
 using MediatR.Extensions.FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Mvc;
 using Common.Shared.Auth.Extensions;
-using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 
 #region di
-
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<AuthDbContext>(options =>
@@ -42,19 +41,9 @@ builder.Services.Configure<JwtOptions>(option =>
         : throw new InvalidOperationException("JWT_REFRESH_EXPIRES_HOURS не найден");
 });
 
-builder.Services
-    .AddOptions<UserServiceOptions>()
-    .Bind(builder.Configuration.GetSection("UserService"))
-    .ValidateDataAnnotations()
-    .Validate(options => Uri.TryCreate(options.BaseUrl, UriKind.Absolute, out _),
-        "UserService:BaseUrl должен быть валидным URI")
-    .ValidateOnStart();
+builder.Services.Configure<UserServiceOptions>(builder.Configuration);
+builder.Services.AddUserServiceClient(builder.Configuration);
 
-builder.Services.AddHttpClient<IUserServiceClient, UserServiceClient>((sp, client) =>
-{
-    var options = sp.GetRequiredService<IOptions<UserServiceOptions>>().Value;
-    client.BaseAddress = new Uri(options.BaseUrl);
-});
 
 builder.Services.AddJwtAuthentication(options =>
 {
@@ -137,6 +126,7 @@ app.MapPost("/api/auth/register", async ([FromBody] RegistrationRequest request,
         ? Results.Ok()
         : result.Error!.ToProblemDetails();
 })
+.Produces(statusCode: StatusCodes.Status200OK)
 .AllowAnonymous()
 .WithSummary("Зарегистрировать пользователя")
 .WithDescription("Возвращает только статус-код");
@@ -227,9 +217,10 @@ app.MapPost("/api/auth/logout", async (HttpContext httpContext, IMediator mediat
         ? Results.Ok()
         : result.Error!.ToProblemDetails();
 })
+.Produces(statusCode: StatusCodes.Status200OK)  
 .WithSummary("Выйти из системы")
 .WithDescription("Удаляет refresh token и инвалидирует сессию")
-.RequireAuthorization();
+.RequireAuthorization("Authenticated");
 
 #endregion
 

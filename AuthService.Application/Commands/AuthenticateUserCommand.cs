@@ -1,6 +1,6 @@
 ﻿using AuthService.Application.interfaces;
+using AuthService.Application.ServiceClientsAbstract;
 using AuthService.Application.Models;
-using AuthService.Domain.Entities;
 using AuthService.Domain.Repos;
 using MediatR;
 using Common;

@@ -1,6 +1,6 @@
 ﻿using AuthService.Application.Models;
 
-namespace AuthService.Application.interfaces;
+namespace AuthService.Application.ServiceClientsAbstract;
 
 public interface IUserServiceClient
 {

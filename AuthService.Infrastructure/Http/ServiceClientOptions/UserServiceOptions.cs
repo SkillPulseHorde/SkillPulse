@@ -1,4 +1,4 @@
-﻿namespace AssessmentService.Infrastructure.Http.ServiceClientOptions;
+﻿namespace AuthService.Infrastructure.Http.ServiceClientOptions;
 
 public class UserServiceOptions
 {

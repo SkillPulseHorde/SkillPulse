@@ -1,4 +1,5 @@
 ﻿using AuthService.Application.interfaces;
+using AuthService.Application.ServiceClientsAbstract;
 using AuthService.Domain.Entities;
 using AuthService.Domain.Repos;
 using Common;

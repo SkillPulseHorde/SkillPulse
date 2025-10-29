@@ -3,7 +3,7 @@ using AuthService.Domain.Entities;
 using AuthService.Domain.Repos;
 using AuthService.Infrastructure.Db;
 
-namespace AuthService.Infrastructure;
+namespace AuthService.Infrastructure.Repos;
 
 public class AuthRepository : IAuthRepository
 {
@@ -37,14 +37,12 @@ public class AuthRepository : IAuthRepository
     public async Task<User?> GetUserByIdAsync(Guid userId, CancellationToken ct = default)
     {
         return await _dbContext.Users
-            .AsTracking()
             .FirstOrDefaultAsync(u => u.Userid == userId, ct);
     }
 
     public async Task<User?> GetUserByRefreshTokenAsync(string refreshToken, CancellationToken ct = default)
     {
         return await _dbContext.Users
-            .AsTracking()
             .FirstOrDefaultAsync(u => u.RefreshToken == refreshToken, ct);
     }
 }

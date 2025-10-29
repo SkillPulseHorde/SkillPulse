@@ -12,5 +12,5 @@ public interface IAuthRepository
     
     Task<User?> GetUserByIdAsync(Guid userId, CancellationToken ct = default);
     
-    Task<User> GetUserByRefreshTokenAsync(string requestRefreshToken, CancellationToken ct = default);
+    Task<User?> GetUserByRefreshTokenAsync(string requestRefreshToken, CancellationToken ct = default);
 }

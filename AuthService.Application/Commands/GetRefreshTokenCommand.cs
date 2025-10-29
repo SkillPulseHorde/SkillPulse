@@ -1,5 +1,6 @@
 ﻿using AuthService.Application.interfaces;
 using AuthService.Application.Models;
+using AuthService.Application.ServiceClientsAbstract;
 using AuthService.Domain.Repos;
 using Common;
 using FluentValidation;

@@ -29,10 +29,7 @@ builder.Services.AddRoleBasedAuthorization();
 builder.Services.AddScoped<IAssessmentRepository, AssessmentRepository>();
 builder.Services.AddScoped<IEvaluationRepository, EvaluationRepository>();
 
-builder.Services.Configure<UserServiceOptions>(
-    builder.Configuration.GetSection("UserService")
-);
-
+builder.Services.Configure<UserServiceOptions>(builder.Configuration);
 builder.Services.AddUserServiceClient(builder.Configuration);
 
 builder.Services.AddEndpointsApiExplorer();
@@ -112,7 +109,10 @@ app.MapPost("/api/assessments", async (
     return result.IsSuccess 
         ? Results.Ok(result.Value) 
         : result.Error!.ToProblemDetails();
-});
+})
+.Produces<Guid>()
+.WithSummary("Создать аттестацию и получить его Id")
+.RequireAuthorization("HROnly");
 
 app.MapGet("/api/assessments/evaluators/{userId:guid}", async (
     [FromRoute] Guid userId,
@@ -126,9 +126,10 @@ app.MapGet("/api/assessments/evaluators/{userId:guid}", async (
     return result.IsSuccess 
         ? Results.Ok(result.Value) 
         : result.Error!.ToProblemDetails();
-})
+}) 
 .Produces<List<Guid>>()
-.WithSummary("Получить Id рецензентов пользователя по его ID");
+.WithSummary("Получить Id рецензентов пользователя по его ID")
+.RequireAuthorization("Authenticated");
 
 // Новый эндпоинт: обновление списка рецензентов пользователя
 app.MapPut("/api/assessments/evaluators/{userId:guid}", async (
@@ -150,7 +151,8 @@ app.MapPut("/api/assessments/evaluators/{userId:guid}", async (
         : result.Error!.ToProblemDetails();
 })
 .Produces(StatusCodes.Status204NoContent)
-.WithSummary("Обновить список рецензентов пользователя (полная замена)");
+.WithSummary("Обновить список рецензентов пользователя (полная замена)")
+.RequireAuthorization("Authenticated");
 
 #endregion
 
