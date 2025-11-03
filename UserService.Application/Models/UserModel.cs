@@ -3,6 +3,7 @@
 namespace UserService.Application.Models;
 
 public record UserModel(
+    Guid Id,
     string FirstName,
     string LastName,
     string? MidName,
@@ -16,6 +17,7 @@ public static class UserModelExtensions
 {
     public static UserModel ToAppModel(this User user) =>
         new UserModel(
+            user.Id,
             user.FirstName,
             user.LastName,
             user.MidName,

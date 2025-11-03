@@ -1,6 +1,10 @@
-﻿namespace AssessmentService.Application.ServiceClientsAbstract;
+﻿using AssessmentService.Application.Models;
+
+namespace AssessmentService.Application.ServiceClientsAbstract;
 
 public interface IUserServiceClient
 {
     Task<bool> UsersExistAsync(List<Guid> userIds, CancellationToken ct);
+    
+    Task<List<UserModel>> GetUsersByIdsAsync(List<Guid> userIds, CancellationToken ct);
 }
