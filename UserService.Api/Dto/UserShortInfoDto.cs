@@ -14,11 +14,20 @@ public sealed record UserShortInfoDto(
 public static class UserShortInfoDtoExtensions
 {
     public static UserShortInfoDto ToDto(this User user) =>
-        new UserShortInfoDto(
+        new(
             user.Id,
             user.FirstName,
             user.LastName,
             user.MidName,
             user.TeamName ?? string.Empty,
             user.Position);
+    
+    public static UserShortInfoDto ToDto(this UserModel userModel) =>
+        new(
+            userModel.Id,
+            userModel.FirstName,
+            userModel.LastName,
+            userModel.MidName,
+            userModel.TeamName ?? string.Empty,
+            userModel.Position);
 }

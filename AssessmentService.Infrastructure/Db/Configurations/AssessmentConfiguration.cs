@@ -20,7 +20,10 @@ public class AssessmentConfiguration : IEntityTypeConfiguration<Assessment>
             .WithOne()
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Для поиска по оцениваемому пользователю (и) за заданный период
+        // Для поиска по оцениваемому пользователю за заданный период
         builder.HasIndex(x => new { x.EvaluateeId, x.StartAt, x.EndsAt });
+        
+        // Для поиска за заданный период
+        builder.HasIndex(x => new { x.StartAt, x.EndsAt });
     }
 }

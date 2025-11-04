@@ -10,7 +10,8 @@ public class InternalAuthMiddleware
     public InternalAuthMiddleware(RequestDelegate next, IConfiguration configuration)
     {
         _next = next;
-        _internalToken = configuration["INTERNAL_TOKEN"]
+        _internalToken = configuration["InternalToken"] // Локально, через AppSettings
+                         ?? configuration["INTERNAL_TOKEN"] // В проде, через переменные окружения (env)
                          ?? throw new InvalidOperationException("INTERNAL_TOKEN не найден");
     }
     
@@ -28,7 +29,6 @@ public class InternalAuthMiddleware
                 
                 if (token == _internalToken)
                 {
-                    
                     var claims = new[]
                     {
                         new Claim("sub", "00000000-0000-0000-0000-000000000000"),

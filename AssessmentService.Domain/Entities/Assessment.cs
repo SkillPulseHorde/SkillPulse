@@ -8,19 +8,19 @@ public sealed class Assessment
     public Guid Id { get; init; } = Guid.NewGuid();
     
     // Оцениваемый пользователь
-    public required Guid EvaluateeId { get; init; }
+    public required Guid EvaluateeId { get; set; }
     
     public DateTime CreatedAt { get; set; }
     
-    public required DateTime StartAt { get; init; }
+    public required DateTime StartAt { get; set; }
     
-    public required DateTime EndsAt { get; init; }
+    public required DateTime EndsAt { get; set; }
     
     // Кто запустил аттестацию
     public required Guid CreatedByUserId { get; set; }
     
     // Рецензенты
-    public ICollection<AssessmentEvaluator> Evaluators { get; init; } = new List<AssessmentEvaluator>();
+    public ICollection<AssessmentEvaluator> Evaluators { get; set; } = new List<AssessmentEvaluator>();
     
-    public ICollection<Evaluation> Evaluations { get; init; } = new List<Evaluation>();
+    public ICollection<Evaluation> Evaluations { get; set; } = new List<Evaluation>();
 }

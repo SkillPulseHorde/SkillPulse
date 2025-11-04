@@ -7,4 +7,6 @@ public sealed record CreateAssessmentRequestDto
     public required DateTime EndsAt { get; init; }
     
     public required Guid CreatedByUserId { get; init; }
+    
+    public required List<Guid> EvaluatorIds { get; init; }
 }

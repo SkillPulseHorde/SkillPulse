@@ -14,11 +14,14 @@ public sealed class UserRepository : IUserRepository
         _dbContext = userDbContext;
     }
 
-    public async Task<List<User>> GetAllUsersReadonlyAsync(Guid currentUserId, string? teamName, CancellationToken ct = default)
+    public async Task<List<User>> GetAllUsersReadonlyAsync(Guid currentUserId,
+        string? teamName,
+        bool isCurrentUserIncluded,
+        CancellationToken ct = default)
     {
         return await _dbContext.Users
             .AsNoTracking()
-            .Where(u => u.Id != currentUserId)
+            .Where(u => isCurrentUserIncluded || u.Id != currentUserId)
             .OrderByDescending(u => u.TeamName == teamName)
             .ThenBy(u => u.TeamName == null)
             .ThenBy(u => u.TeamName)
@@ -34,14 +37,14 @@ public sealed class UserRepository : IUserRepository
             .FirstOrDefaultAsync(u => u.Id == id, ct);
     }
 
-public async Task<Guid?> GetUserIdByEmailAsync(string email, CancellationToken ct = default)
-{
-    return await _dbContext.Users
-        .AsNoTracking()
-        .Where(u => u.Email == email)
-        .Select(u => (Guid?)u.Id)
-        .FirstOrDefaultAsync(ct);
-}
+    public async Task<Guid?> GetUserIdByEmailAsync(string email, CancellationToken ct = default)
+    {
+        return await _dbContext.Users
+            .AsNoTracking()
+            .Where(u => u.Email == email)
+            .Select(u => (Guid?)u.Id)
+            .FirstOrDefaultAsync(ct);
+    }
 
     public async Task<List<User>> GetSubordinatesReadonlyByUserIdAsync(Guid managerId, CancellationToken ct = default)
     {
@@ -64,5 +67,16 @@ public async Task<Guid?> GetUserIdByEmailAsync(string email, CancellationToken c
             .CountAsync(ct);
 
         return foundCount == userIds.Count;
+    }
+    
+    public async Task<List<User>> GetUsersByIdsReadonlyAsync(List<Guid> userIds, CancellationToken ct = default)
+    {
+        if (userIds.Count == 0)
+            return [];
+        
+        return await _dbContext.Users
+            .AsNoTracking()
+            .Where(u => userIds.Contains(u.Id))
+            .ToListAsync(ct);
     }
 }
