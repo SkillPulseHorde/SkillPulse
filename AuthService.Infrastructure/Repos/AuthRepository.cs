@@ -27,22 +27,28 @@ public class AuthRepository : IAuthRepository
             .FirstOrDefaultAsync(u => u.Email == email, ct);
     }
 
-    public async Task UpdateUserAsync(User user, CancellationToken ct = default)
+    public async Task UpdateRefreshTokenUserAsync(User updatedUser, CancellationToken ct = default)
     {
-        _dbContext.Users
-            .Update(user);
+        var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Userid == updatedUser.Userid, ct);
+        
+        user!.RefreshToken = updatedUser.RefreshToken;
+        user.RefreshTokenExpiryTime = updatedUser.RefreshTokenExpiryTime;
+        
+        _dbContext.Users.Update(user);
         await _dbContext.SaveChangesAsync(ct);
     }
 
-    public async Task<User?> GetUserByIdAsync(Guid userId, CancellationToken ct = default)
+    public async Task<User?> GetUserByIdReadOnlyAsync(Guid userId, CancellationToken ct = default)
     {
         return await _dbContext.Users
+            .AsNoTracking()
             .FirstOrDefaultAsync(u => u.Userid == userId, ct);
     }
 
-    public async Task<User?> GetUserByRefreshTokenAsync(string refreshToken, CancellationToken ct = default)
+    public async Task<User?> GetUserByRefreshTokenReadOnlyAsync(string refreshToken, CancellationToken ct = default)
     {
         return await _dbContext.Users
+            .AsNoTracking()
             .FirstOrDefaultAsync(u => u.RefreshToken == refreshToken, ct);
     }
 }

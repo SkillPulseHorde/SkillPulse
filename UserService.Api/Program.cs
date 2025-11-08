@@ -1,77 +1,25 @@
-using System.Text.Json.Serialization;
 using MediatR;
+using UserService.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using UserService;
 using UserService.Application.Models;
 using UserService.Application.Queries;
-using UserService.Domain.Repos;
 using UserService.Dto;
-using UserService.Infrastructure.Db;
-using UserService.Infrastructure.Repos;
 using Common.Shared.Auth.Extensions;
-using Microsoft.OpenApi.Models;
 using UserService.Middleware;
 
 #region di
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddDbContext<UserDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("UserDb")));
-
-builder.Services.AddJwtAuthentication(options =>
-{
-    options.SecretKey = builder.Configuration["Jwt:SecretKey"]
-                        ?? builder.Configuration["JWT_SECRET_KEY"]
-                        ?? throw new InvalidOperationException("JWT SecretKey не найден");
-});
-
+builder.Services.AddDatabase(builder.Configuration);
+builder.Services.AddAuthenticationConfiguration(builder.Configuration);
 builder.Services.AddRoleBasedAuthorization();
-
-builder.Services.AddScoped<IUserRepository, UserRepository>();
-//builder.Services.AddValidatorsFromAssembly(Assembly.Load("MyProject.Application"));
-
+builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddApplication();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(options =>
-{
-    options.SwaggerDoc("v1", new OpenApiInfo
-    {
-        Title = "UserService API",
-        Version = "v1",
-        Description = "API для аутентификации и авторизации"
-    });
-
-    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-    {
-        Name = "Authorization",
-        Type = SecuritySchemeType.Http,
-        Scheme = "Bearer",
-        BearerFormat = "JWT",
-        In = ParameterLocation.Header,
-        Description = "Введите JWT токен в формате: Bearer {ваш_токен}"
-    });
-
-    options.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
-        {
-            new OpenApiSecurityScheme
-            {
-                Reference = new OpenApiReference
-                {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
-            },
-            Array.Empty<string>()
-        }
-    });
-});
-
-builder.Services.AddMediatR(cfg => { cfg.RegisterServicesFromAssemblies(typeof(GetUserByIdQueryHandler).Assembly); });
-
-builder.Services.ConfigureHttpJsonOptions(o => { o.SerializerOptions.Converters.Add(new JsonStringEnumConverter()); });
-
+builder.Services.AddSwaggerDocumentation();
+builder.Services.AddJsonConfiguration();
 
 var app = builder.Build();
 
@@ -79,6 +27,9 @@ app.UseSwagger();
 app.UseSwaggerUI();
 
 app.UseMiddleware<InternalAuthMiddleware>();
+if (app.Environment.IsDevelopment())
+    app.UseMiddleware<DevelopmentAuthenticationMiddleware>();
+
 app.UseAuthentication();
 app.UseAuthorization();
 

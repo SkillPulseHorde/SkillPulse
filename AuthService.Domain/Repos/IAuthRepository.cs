@@ -8,9 +8,9 @@ public interface IAuthRepository
     
     Task<User?> GetUserByEmailReadOnlyAsync(string email, CancellationToken ct = default);
     
-    Task UpdateUserAsync(User user, CancellationToken ct = default);
+    Task UpdateRefreshTokenUserAsync(User user, CancellationToken ct = default);
     
-    Task<User?> GetUserByIdAsync(Guid userId, CancellationToken ct = default);
+    Task<User?> GetUserByIdReadOnlyAsync(Guid userId, CancellationToken ct = default);
     
-    Task<User?> GetUserByRefreshTokenAsync(string requestRefreshToken, CancellationToken ct = default);
+    Task<User?> GetUserByRefreshTokenReadOnlyAsync(string requestRefreshToken, CancellationToken ct = default);
 }

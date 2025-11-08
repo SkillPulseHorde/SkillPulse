@@ -53,7 +53,7 @@ public sealed class AuthenticateUserCommandHandler : IRequestHandler<Authenticat
             DateTimeOffset.UtcNow.AddHours(_jwtProvider.GetRefreshExpiresHours())
         );
 
-        await _authRepository.UpdateUserAsync(user, ct);
+        await _authRepository.UpdateRefreshTokenUserAsync(user, ct);
 
         var tokens = new TokensModel
         {

@@ -17,11 +17,9 @@ public sealed class UpdateEvaluatorsForUserCommandHandler(
     IUserServiceClient userServiceClient)
     : IRequestHandler<UpdateEvaluatorsForUserCommand, Result>
 {
-    private readonly UpdateEvaluatorsForUserCommandValidator _validator = new();
 
     public async Task<Result> Handle(UpdateEvaluatorsForUserCommand request, CancellationToken cancellationToken)
     {
-        await _validator.ValidateAndThrowAsync(request, cancellationToken);
         
         var allUserIdsToCheck = request.EvaluatorIds
             .Append(request.UserId)

@@ -1,112 +1,28 @@
-using System.Text;
-using System.Text.Json.Serialization;
 using AuthService.Api.DTO;
-using AuthService;
+using AuthService.Api;
+using AuthService.Api.Extensions.DependencyInjection;
 using AuthService.Application.Commands;
-using AuthService.Application.interfaces;
-using AuthService.Domain.Repos;
-using AuthService.Infrastructure;
-using AuthService.Infrastructure.Db;
-using AuthService.Infrastructure.Repos;
-using AuthService.Infrastructure.Http.ServiceClientOptions;
-using AuthService.Infrastructure.Http.ServiceCollectionExtensions;
 using Common;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
-using FluentValidation;
-using MediatR.Extensions.FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Mvc;
 using Common.Shared.Auth.Extensions;
-using Microsoft.OpenApi.Models;
 
 #region di
+
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddDbContext<AuthDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("AuthDb")));
- 
-builder.Services.Configure<JwtOptions>(option =>
-{
-    option.SecretKey = builder.Configuration["JWT_SECRET_KEY"]
-                       ?? throw new InvalidOperationException("JWT_SECRET_KEY не найден");
-    if (Encoding.UTF8.GetByteCount(option.SecretKey) < 32)
-        throw new InvalidOperationException("JWT_SECRET_KEY должен быть не менее 32 символа");
-
-    option.AccessExpiresMinutes = int.TryParse(builder.Configuration["JWT_ACCESS_EXPIRES_MINUTES"], out var accMinutes)
-        ? accMinutes
-        : throw new InvalidOperationException("JWT_ACCESS_EXPIRES_HOURS не найден");
-
-    option.RefreshExpiresHours = int.TryParse(builder.Configuration["JWT_REFRESH_EXPIRES_HOURS"], out var refHours)
-        ? refHours
-        : throw new InvalidOperationException("JWT_REFRESH_EXPIRES_HOURS не найден");
-});
-
-builder.Services.Configure<UserServiceOptions>(builder.Configuration);
-builder.Services.AddUserServiceClient(builder.Configuration);
-
-
-builder.Services.AddJwtAuthentication(options =>
-{
-    options.SecretKey = builder.Configuration["JWT_SECRET_KEY"] ?? "";
-});
+builder.Services.AddDatabase(builder.Configuration);
+builder.Services.AddAuthenticationConfiguration(builder.Configuration);
 builder.Services.AddRoleBasedAuthorization();
-
-builder.Services.AddScoped<IAuthRepository, AuthRepository>();
-builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
-builder.Services.AddScoped<IJwtProvider, JwtProvider>();
-
-//TODO заменить на нормальную валидацию
-builder.Services.AddScoped<IValidator<CreateRegistrationCommand>, CreateRegistrationCommandValidator>();
-builder.Services.AddScoped<IValidator<AuthenticateUserCommand>, AuthenticateUserCommandValidator>();
-builder.Services.AddScoped<IValidator<GetRefreshTokenCommand>, GetRefreshTokenCommandValidator>();
-builder.Services.AddScoped<IValidator<LogoutUserCommand>, LogoutUserCommandValidator>();
-
+builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddApplication();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(options =>
-{
-    options.SwaggerDoc("v1", new OpenApiInfo
-    {
-        Title = "AuthService API",
-        Version = "v1",
-        Description = "API для аутентификации и авторизации"
-    });
-
-    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-    {
-        Name = "Authorization",
-        Type = SecuritySchemeType.Http,
-        Scheme = "Bearer",
-        BearerFormat = "JWT",
-        In = ParameterLocation.Header,
-        Description = "Введите JWT токен в формате: Bearer {ваш_токен}"
-    });
-
-    options.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
-        {
-            new OpenApiSecurityScheme
-            {
-                Reference = new OpenApiReference
-                {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
-            },
-            Array.Empty<string>()
-        }
-    });
-});
-
-builder.Services.AddMediatR(cfg =>
-{
-    cfg.RegisterServicesFromAssemblies(typeof(CreateRegistrationCommandHandler).Assembly);
-});
-
-builder.Services.AddFluentValidation([typeof(CreateRegistrationCommandHandler).Assembly]);
-
-builder.Services.ConfigureHttpJsonOptions(o => { o.SerializerOptions.Converters.Add(new JsonStringEnumConverter()); });
+builder.Services.AddSwaggerDocumentation();
+builder.Services.AddJsonConfiguration();
 
 var app = builder.Build();
+
+
 
 app.UseSwagger();
 app.UseSwaggerUI();

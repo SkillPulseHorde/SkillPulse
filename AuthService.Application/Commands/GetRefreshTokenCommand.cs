@@ -32,7 +32,7 @@ public sealed class GetRefreshTokenCommandHandler : IRequestHandler<GetRefreshTo
     public async Task<Result<TokensModel>> Handle(GetRefreshTokenCommand request, CancellationToken ct)
     {
         
-        var user = await _authRepository.GetUserByRefreshTokenAsync(request.RefreshToken, ct);
+        var user = await _authRepository.GetUserByRefreshTokenReadOnlyAsync(request.RefreshToken, ct);
         if (user is null)
             return Result<TokensModel>.Failure(Error.Unauthorized("Ошибка авторизации"));
         if (user.RefreshTokenExpiryTime < DateTimeOffset.UtcNow)
@@ -50,7 +50,7 @@ public sealed class GetRefreshTokenCommandHandler : IRequestHandler<GetRefreshTo
             DateTimeOffset.UtcNow.AddHours(_jwtProvider.GetRefreshExpiresHours())
         );
 
-        await _authRepository.UpdateUserAsync(user, ct);
+        await _authRepository.UpdateRefreshTokenUserAsync(user, ct);
 
         var tokenResponse = new TokensModel()
         {
