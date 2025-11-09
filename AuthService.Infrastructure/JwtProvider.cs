@@ -23,7 +23,7 @@ public class JwtProvider : IJwtProvider
     {
         Claim[] claims =
         [
-            new(ClaimTypes.NameIdentifier, user.Userid.ToString()),
+            new(ClaimTypes.NameIdentifier, user.UserId.ToString()),
             new(ClaimsIdentity.DefaultRoleClaimType, role)
         ];
         

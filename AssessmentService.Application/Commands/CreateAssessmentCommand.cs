@@ -25,12 +25,9 @@ public sealed class CreateAssessmentCommandHandler(
     IUserServiceClient userServiceClient)
     : IRequestHandler<CreateAssessmentCommand, Result<Guid>>
 {
-    private readonly CreateAssessmentCommandValidator _createAssessmentCommandValidator = new();
-    
+
     public async Task<Result<Guid>> Handle(CreateAssessmentCommand request, CancellationToken ct)
     {
-        await _createAssessmentCommandValidator.ValidateAndThrowAsync(request, cancellationToken: ct);
-        
         var allUserIdsToCheck = request.EvaluatorIds
             .Append(request.CreatedByUserId)
             .Append(request.EvaluateeId)
@@ -41,7 +38,7 @@ public sealed class CreateAssessmentCommandHandler(
         {
             return Result<Guid>.Failure(Error.NotFound("Заданные пользователи не существуют"));
         }
-        
+
         var assessment = new Assessment
         {
             EvaluateeId = request.EvaluateeId,

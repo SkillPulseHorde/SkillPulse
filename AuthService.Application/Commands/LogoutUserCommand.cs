@@ -18,13 +18,13 @@ public sealed class LogoutUserCommandHandler : IRequestHandler<LogoutUserCommand
 
     public async Task<Result> Handle(LogoutUserCommand request, CancellationToken cancellationToken)
     {
-        var user = await _authRepository.GetUserByIdAsync(request.UserId, cancellationToken);
+        var user = await _authRepository.GetUserByIdReadOnlyAsync(request.UserId, cancellationToken);
         if (user == null)
             return Result<string>.Failure(Error.NotFound("Пользователь не найден"));
         
         user.ClearRefreshToken();
         
-        await _authRepository.UpdateUserAsync(user, cancellationToken);
+        await _authRepository.UpdateRefreshTokenUserAsync(user, cancellationToken);
         
         return Result.Success();
     }

@@ -1,12 +1,9 @@
 ﻿using AssessmentService.Application.ServiceClientsAbstract;
 using AssessmentService.Infrastructure.Http.ServiceClientOptions;
 using AssessmentService.Infrastructure.Http.ServiceClients;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
-
-namespace AssessmentService.Infrastructure.Http.ServiceCollectionExtensions;
+namespace AssessmentService.Api.Extensions.ServiceCollectionExtensions;
 
 public static class UserServiceRegistration
 {

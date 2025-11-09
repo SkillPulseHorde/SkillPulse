@@ -1,91 +1,32 @@
 using System.ComponentModel.DataAnnotations;
-using System.Text.Json.Serialization;
 using AssessmentService.Api;
 using AssessmentService.Api.Dto;
 using AssessmentService.Application.Commands;
-using AssessmentService.Application.Models;
 using AssessmentService.Application.Queries;
-using AssessmentService.Domain.Repos;
-using AssessmentService.Infrastructure.Db;
-using AssessmentService.Infrastructure.Http.ServiceClientOptions;
-using AssessmentService.Infrastructure.Http.ServiceCollectionExtensions;
-using AssessmentService.Infrastructure.Repos;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Common.Shared.Auth.Extensions;
-using Microsoft.OpenApi.Models;
+using AssessmentService.Api.Extensions.DependencyInjection;
+using Common.Middleware;
 
 #region di
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddDbContext<AssessmentDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("AssessmentDb")));
-
-builder.Services.AddJwtAuthentication(options =>
-{
-    options.SecretKey = builder.Configuration["Jwt:SecretKey"]
-                        ?? builder.Configuration["JWT_SECRET_KEY"]
-                        ?? throw new InvalidOperationException("JWT SecretKey не найден");
-});
-
+builder.Services.AddAuthenticationConfiguration(builder.Configuration);
 builder.Services.AddRoleBasedAuthorization();
-
-builder.Services.AddScoped<IAssessmentRepository, AssessmentRepository>();
-builder.Services.AddScoped<IEvaluationRepository, EvaluationRepository>();
-
-builder.Services.Configure<UserServiceOptions>(builder.Configuration);
-builder.Services.AddUserServiceClient(builder.Configuration);
-
+builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddApplication();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(options =>
-{
-    options.SwaggerDoc("v1", new OpenApiInfo
-    {
-        Title = "AssessmentService API",
-        Version = "v1",
-        Description = "API для аутентификации и авторизации"
-    });
-
-    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-    {
-        Name = "Authorization",
-        Type = SecuritySchemeType.Http,
-        Scheme = "Bearer",
-        BearerFormat = "JWT",
-        In = ParameterLocation.Header,
-        Description = "Введите JWT токен в формате: Bearer {ваш_токен}"
-    });
-
-    options.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
-        {
-            new OpenApiSecurityScheme
-            {
-                Reference = new OpenApiReference
-                {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
-            },
-            Array.Empty<string>()
-        }
-    });
-});
-
-builder.Services.AddMediatR(cfg =>
-{
-    cfg.RegisterServicesFromAssemblies(typeof(CreateAssessmentCommandHandler).Assembly);
-});
-
-builder.Services.ConfigureHttpJsonOptions(o => { o.SerializerOptions.Converters.Add(new JsonStringEnumConverter()); });
-
+builder.Services.AddSwaggerDocumentation();
 
 var app = builder.Build();
 
 app.UseSwagger();
 app.UseSwaggerUI();
+
+if (app.Environment.IsDevelopment())
+    app.UseMiddleware<DevelopmentAuthenticationMiddleware>();
 
 app.UseAuthentication();
 app.UseAuthorization();

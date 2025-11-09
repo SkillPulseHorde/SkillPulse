@@ -3,10 +3,17 @@
 public class Result
 {
     [System.Diagnostics.CodeAnalysis.MemberNotNullWhen(false, nameof(Error))]
-    public bool IsSuccess { get; }
-    
-    public Error? Error { get; }
+    public bool IsSuccess { get; private set; }
 
+    public Error? Error { get; private set; }
+
+    // Для фабрики
+    public Result()
+    {
+        IsSuccess = true;
+        Error = null;
+    }
+    
     protected Result(bool isSuccess, Error? error)
     {
         IsSuccess = isSuccess;
@@ -14,15 +21,29 @@ public class Result
     }
 
     public static Result Success() => new(true, null);
-    public static Result Failure(Error error) => new(false, error);
+    public static Result Failure(Error error) => new (false, error);
+
+    public static TResult Failure<TResult>(Error error) where TResult : Result, new()
+    {
+        return new TResult
+        {
+            IsSuccess = false, 
+            Error = error
+        };
+    }
 }
 
 public class Result<T> : Result
 {
-    public T? Value { get; }
+    public T? Value { get; set; }
 
     [System.Diagnostics.CodeAnalysis.MemberNotNullWhen(true, nameof(Value))]
     public new bool IsSuccess => base.IsSuccess;
+
+    public Result() : base()
+    {
+        Value = default;
+    }
     
     private Result(T value) : base(true, null)
     {

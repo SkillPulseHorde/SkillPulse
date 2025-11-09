@@ -27,22 +27,29 @@ public class AuthRepository : IAuthRepository
             .FirstOrDefaultAsync(u => u.Email == email, ct);
     }
 
-    public async Task UpdateUserAsync(User user, CancellationToken ct = default)
+    public async Task UpdateRefreshTokenUserAsync(User updatedUser, CancellationToken ct = default)
     {
-        _dbContext.Users
-            .Update(user);
+        var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.UserId == updatedUser.UserId, ct);
+        if (user == null)
+            throw new InvalidOperationException($"User({updatedUser.UserId}) не найден");
+        
+        user.RefreshToken = updatedUser.RefreshToken;
+        user.RefreshTokenExpiryTime = updatedUser.RefreshTokenExpiryTime;
+        
         await _dbContext.SaveChangesAsync(ct);
     }
 
-    public async Task<User?> GetUserByIdAsync(Guid userId, CancellationToken ct = default)
+    public async Task<User?> GetUserByIdReadOnlyAsync(Guid userId, CancellationToken ct = default)
     {
         return await _dbContext.Users
-            .FirstOrDefaultAsync(u => u.Userid == userId, ct);
+            .AsNoTracking()
+            .FirstOrDefaultAsync(u => u.UserId == userId, ct);
     }
 
-    public async Task<User?> GetUserByRefreshTokenAsync(string refreshToken, CancellationToken ct = default)
+    public async Task<User?> GetUserByRefreshTokenReadOnlyAsync(string refreshToken, CancellationToken ct = default)
     {
         return await _dbContext.Users
+            .AsNoTracking()
             .FirstOrDefaultAsync(u => u.RefreshToken == refreshToken, ct);
     }
 }

@@ -1,11 +1,9 @@
 ﻿using AuthService.Application.ServiceClientsAbstract;
 using AuthService.Infrastructure.Http.ServiceClientOptions;
 using AuthService.Infrastructure.Http.ServiceClients;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
-namespace AuthService.Infrastructure.Http.ServiceCollectionExtensions;
+namespace AuthService.Api.Extensions.ServiceCollectionExtensions;
 
 public static class UserServiceRegistration
 {
