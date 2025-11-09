@@ -1,4 +1,5 @@
-﻿using AuthService.Application.Behaviors;
+﻿using System.Text.Json.Serialization;
+using AuthService.Application.Behaviors;
 using AuthService.Application.Commands;
 using FluentValidation;
 
@@ -18,6 +19,13 @@ public static class ApplicationExtensions
 
         // FluentValidation
         services.AddValidatorsFromAssemblyContaining<CreateRegistrationCommand>();
+
+        // JsonOptions
+
+        services.ConfigureHttpJsonOptions(options =>
+        {
+            options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+        });
 
         return services;
     }

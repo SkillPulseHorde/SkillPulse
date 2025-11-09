@@ -8,6 +8,9 @@ public class DevelopmentAuthenticationMiddleware
     private readonly RequestDelegate _next;
     private readonly IHostEnvironment _environment;
     
+    private const string DevUserId = "55555555-5555-5555-5555-555555555001";
+    private const string DevUserRole = "HR";
+    
     public DevelopmentAuthenticationMiddleware(
         RequestDelegate next, 
         IHostEnvironment environment)
@@ -23,8 +26,8 @@ public class DevelopmentAuthenticationMiddleware
         {
             var claims = new[]
             {
-                new Claim(ClaimTypes.NameIdentifier, "55555555-5555-5555-5555-555555555001"),
-                new Claim(ClaimsIdentity.DefaultRoleClaimType, "HR"),
+                new Claim(ClaimTypes.NameIdentifier, DevUserId),
+                new Claim(ClaimsIdentity.DefaultRoleClaimType, DevUserRole),
                 new Claim("dev_user", "true"),
             };
 

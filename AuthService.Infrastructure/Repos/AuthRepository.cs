@@ -30,11 +30,12 @@ public class AuthRepository : IAuthRepository
     public async Task UpdateRefreshTokenUserAsync(User updatedUser, CancellationToken ct = default)
     {
         var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Userid == updatedUser.Userid, ct);
+        if (user == null)
+            throw new InvalidOperationException("User не найден");
         
-        user!.RefreshToken = updatedUser.RefreshToken;
+        user.RefreshToken = updatedUser.RefreshToken;
         user.RefreshTokenExpiryTime = updatedUser.RefreshTokenExpiryTime;
         
-        _dbContext.Users.Update(user);
         await _dbContext.SaveChangesAsync(ct);
     }
 

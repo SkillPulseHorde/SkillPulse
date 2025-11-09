@@ -14,6 +14,7 @@ public sealed class UserServiceClient(
     : IUserServiceClient
 {
     private readonly string _internalToken = options.Value.InternalToken;
+    private const string BASE_URL = "/api/users";
     
     public async Task<bool> UsersExistAsync(List<Guid> userIds, CancellationToken ct)
     {
@@ -22,7 +23,7 @@ public sealed class UserServiceClient(
             UserIds = userIds
         };
 
-        var request = new HttpRequestMessage(HttpMethod.Post, $"/api/users/exist")
+        var request = new HttpRequestMessage(HttpMethod.Post, $"{BASE_URL}/exist")
         {
             Content = JsonContent.Create(requestDto)
         };
@@ -41,7 +42,7 @@ public sealed class UserServiceClient(
             UserIds = userIds
         };
 
-        var request = new HttpRequestMessage(HttpMethod.Post, $"/api/users/by-ids")
+        var request = new HttpRequestMessage(HttpMethod.Post, $"{BASE_URL}/by-ids")
         {
             Content = JsonContent.Create(requestDto)
         };

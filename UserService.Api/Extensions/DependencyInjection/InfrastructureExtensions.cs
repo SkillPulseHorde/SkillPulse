@@ -1,4 +1,6 @@
-﻿using UserService.Domain.Repos;
+﻿using Microsoft.EntityFrameworkCore;
+using UserService.Domain.Repos;
+using UserService.Infrastructure.Db;
 using UserService.Infrastructure.Repos;
 
 namespace UserService.Extensions.DependencyInjection;
@@ -9,6 +11,10 @@ public static class InfrastructureExtensions
         this IServiceCollection services,
         IConfiguration configuration)
     {
+        // База данных
+        services.AddDbContext<UserDbContext>(options =>
+            options.UseNpgsql(configuration.GetConnectionString("UserDb")));
+        
         // Репозитории
         services.AddScoped<IUserRepository, UserRepository>();
 

@@ -21,7 +21,7 @@ public sealed class ValidationBehavior<TRequest, TResponse> : IPipelineBehavior<
         CancellationToken cancellationToken
     )
     {
-        if(!_validators.Any())
+        if (!_validators.Any())
             return await next(cancellationToken);
         
         var context = new ValidationContext<TRequest>(request);
@@ -34,7 +34,7 @@ public sealed class ValidationBehavior<TRequest, TResponse> : IPipelineBehavior<
             .SelectMany(r => r.Errors)
             .ToList();
 
-        if (failures.Count <= 0) return await next(cancellationToken);
+        if (failures.Count == 0) return await next(cancellationToken);
         
         var errorsByField = failures
             .GroupBy(f => f.PropertyName)

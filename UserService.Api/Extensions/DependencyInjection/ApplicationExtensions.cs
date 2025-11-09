@@ -1,4 +1,5 @@
-﻿using UserService.Application.Queries;
+﻿using System.Text.Json.Serialization;
+using UserService.Application.Queries;
 using UserService.Application.Behaviors;
 using FluentValidation;
 
@@ -18,6 +19,12 @@ public static class ApplicationExtensions
 
         // FluentValidation
         services.AddValidatorsFromAssemblyContaining<GetUserByIdQuery>();
+
+        // JsonOptions
+        services.ConfigureHttpJsonOptions(option =>
+        {
+            option.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+        });
 
         return services;
     }

@@ -19,7 +19,7 @@ public static class AuthenticationExtensions
 
             option.AccessExpiresMinutes = int.TryParse(configuration["JWT_ACCESS_EXPIRES_MINUTES"], out var accMinutes)
                 ? accMinutes
-                : throw new InvalidOperationException("JWT_ACCESS_EXPIRES_HOURS не найден");
+                : throw new InvalidOperationException("JWT_ACCESS_EXPIRES_MINUTES не найден");
 
             option.RefreshExpiresHours = int.TryParse(configuration["JWT_REFRESH_EXPIRES_HOURS"], out var refHours)
                 ? refHours

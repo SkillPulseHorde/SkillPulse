@@ -2,8 +2,10 @@
 using AuthService.Domain.Repos;
 using AuthService.Application.interfaces;
 using AuthService.Infrastructure;
+using AuthService.Infrastructure.Db;
 using AuthService.Infrastructure.Repos;
 using AuthService.Infrastructure.Http.ServiceClientOptions;
+using Microsoft.EntityFrameworkCore;
 
 namespace AuthService.Api.Extensions.DependencyInjection;
 
@@ -13,6 +15,10 @@ public static class InfrastructureExtensions
         this IServiceCollection services,
         IConfiguration configuration)
     {
+        // База данных
+        services.AddDbContext<AuthDbContext>(options =>
+            options.UseNpgsql(configuration.GetConnectionString("AuthDb")));
+        
         // Репозитории
         services.AddScoped<IAuthRepository, AuthRepository>();
 

@@ -1,4 +1,5 @@
-﻿using AssessmentService.Application.Behaviors;
+﻿using System.Text.Json.Serialization;
+using AssessmentService.Application.Behaviors;
 using AssessmentService.Application.Commands;
 using FluentValidation;
 
@@ -18,6 +19,12 @@ public static class ApplicationExtensions
         
         // FluentValidation
         services.AddValidatorsFromAssemblyContaining<CreateAssessmentCommand>();
+
+        // JsonOptions
+        services.ConfigureHttpJsonOptions(options =>
+        {
+            options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+        });
 
         return services;
     }
