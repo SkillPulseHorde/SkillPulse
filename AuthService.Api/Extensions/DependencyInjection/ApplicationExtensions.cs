@@ -10,17 +10,15 @@ public static class ApplicationExtensions
     public static IServiceCollection AddApplication(
         this IServiceCollection services)
     {
+        // FluentValidation
+        services.AddValidatorsFromAssemblyContaining<CreateRegistrationCommand>();
+        
         // MediatR
         services.AddMediatR(cfg =>
         {
             cfg.RegisterServicesFromAssemblies(typeof(CreateRegistrationCommandHandler).Assembly);
             cfg.AddOpenBehavior(typeof(ValidationBehavior<,>));
         });
-
-        // FluentValidation
-        services.AddValidatorsFromAssemblyContaining<CreateRegistrationCommand>();
-
-        // JsonOptions
 
         services.ConfigureHttpJsonOptions(options =>
         {

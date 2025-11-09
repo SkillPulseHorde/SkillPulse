@@ -7,7 +7,7 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Common.Shared.Auth.Extensions;
 using AssessmentService.Api.Extensions.DependencyInjection;
-using AssessmentService.Api.Middleware;
+using Common.Middleware;
 
 #region di
 

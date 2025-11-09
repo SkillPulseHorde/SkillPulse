@@ -38,7 +38,7 @@ public sealed class GetRefreshTokenCommandHandler : IRequestHandler<GetRefreshTo
         if (user.RefreshTokenExpiryTime < DateTimeOffset.UtcNow)
             return Result<TokensModel>.Failure(Error.Unauthorized("Токен истек"));
 
-        var userFromUserService = await _userServiceClient.GetUserByIdAsync(user.Userid, ct);
+        var userFromUserService = await _userServiceClient.GetUserByIdAsync(user.UserId, ct);
         if (userFromUserService is null)
             return Result<TokensModel>.Failure(Error.Unauthorized("Пользователь не найден в UserService"));
         

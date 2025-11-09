@@ -7,6 +7,7 @@ using UserService.Application.Queries;
 using UserService.Dto;
 using Common.Shared.Auth.Extensions;
 using UserService.Middleware;
+using Common.Middleware;
 
 #region di
 

@@ -9,7 +9,7 @@ public static class ProblemDetailsMapper
         var statusCode = error.Code switch
         {
             "not_found" => StatusCodes.Status404NotFound,
-            "validation_error" => StatusCodes.Status400BadRequest,
+            "validation_error" => StatusCodes.Status422UnprocessableEntity,
             _ => StatusCodes.Status500InternalServerError
         };
         

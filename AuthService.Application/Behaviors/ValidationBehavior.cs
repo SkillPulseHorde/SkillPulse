@@ -6,7 +6,7 @@ namespace AuthService.Application.Behaviors;
 
 public sealed class ValidationBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
     where TRequest : IRequest<TResponse>
-    where TResponse : Result
+    where TResponse : Result, new()
 {
     private readonly IEnumerable<IValidator<TRequest>> _validators;
 
@@ -18,8 +18,7 @@ public sealed class ValidationBehavior<TRequest, TResponse> : IPipelineBehavior<
     public async Task<TResponse> Handle(
         TRequest request,
         RequestHandlerDelegate<TResponse> next,
-        CancellationToken ct
-    )
+        CancellationToken ct)
     {
         if (!_validators.Any())
             return await next(ct);
@@ -34,7 +33,8 @@ public sealed class ValidationBehavior<TRequest, TResponse> : IPipelineBehavior<
             .SelectMany(r => r.Errors)
             .ToList();
 
-        if (failures.Count == 0) return await next(ct);
+        if (failures.Count == 0) 
+            return await next(ct);
 
         var errorsByField = failures
             .GroupBy(f => f.PropertyName)
@@ -43,22 +43,7 @@ public sealed class ValidationBehavior<TRequest, TResponse> : IPipelineBehavior<
                 g => g.Select(e => e.ErrorMessage).ToArray());
 
         var error = Error.Validation(errorsByField);
-
-        return CreateFailureResult(error);
-    }
-
-    private static TResponse CreateFailureResult(Error error)
-    {
-        return (dynamic)CreateTypedFailure((dynamic)error, default(TResponse)!);
-    }
-
-    private static Result CreateTypedFailure(Error error, Result _)
-    {
-        return Result.Failure(error);
-    }
-
-    private static Result<T> CreateTypedFailure<T>(Error error, Result<T> _)
-    {
-        return Result<T>.Failure(error);
+        
+        return Result.Failure<TResponse>(error);
     }
 }

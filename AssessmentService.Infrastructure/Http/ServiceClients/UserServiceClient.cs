@@ -14,7 +14,7 @@ public sealed class UserServiceClient(
     : IUserServiceClient
 {
     private readonly string _internalToken = options.Value.InternalToken;
-    private const string BASE_URL = "/api/users";
+    private const string BaseUrl = "/api/users";
     
     public async Task<bool> UsersExistAsync(List<Guid> userIds, CancellationToken ct)
     {
@@ -23,13 +23,11 @@ public sealed class UserServiceClient(
             UserIds = userIds
         };
 
-        var request = new HttpRequestMessage(HttpMethod.Post, $"{BASE_URL}/exist")
-        {
-            Content = JsonContent.Create(requestDto)
-        };
+        using var request = new HttpRequestMessage(HttpMethod.Post, $"{BaseUrl}/exist");
+        request.Content = JsonContent.Create(requestDto);
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _internalToken);
 
-        var response = await httpClient.SendAsync(request, ct);
+        using var response = await httpClient.SendAsync(request, ct);
         response.EnsureSuccessStatusCode();
 
         return await response.Content.ReadFromJsonAsync<bool>(cancellationToken: ct);
@@ -42,13 +40,11 @@ public sealed class UserServiceClient(
             UserIds = userIds
         };
 
-        var request = new HttpRequestMessage(HttpMethod.Post, $"{BASE_URL}/by-ids")
-        {
-            Content = JsonContent.Create(requestDto)
-        };
+        using var request = new HttpRequestMessage(HttpMethod.Post, $"{BaseUrl}/by-ids");
+        request.Content = JsonContent.Create(requestDto);
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _internalToken);
         
-        var response = await httpClient.SendAsync(request, ct);
+        using var response = await httpClient.SendAsync(request, ct);
         response.EnsureSuccessStatusCode();
 
         var users = await response.Content.ReadFromJsonAsync<List<UserServiceDto>>(cancellationToken: ct);

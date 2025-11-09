@@ -40,7 +40,7 @@ public sealed class CreateRegistrationCommandHandler : IRequestHandler<CreateReg
 
         var newUser = new User
         {
-            Userid = userIdFromUserService.Value,
+            UserId = userIdFromUserService.Value,
             Email = request.Email,
             PasswordHash = hashedPassword
         };

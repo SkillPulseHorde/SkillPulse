@@ -1,8 +1,9 @@
 ﻿using System.Security.Claims;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Hosting;
 
-namespace UserService.Middleware;
+namespace Common.Middleware;
 
-// Только для разработки!
 public class DevelopmentAuthenticationMiddleware
 {
     private readonly RequestDelegate _next;
@@ -21,8 +22,7 @@ public class DevelopmentAuthenticationMiddleware
 
     public async Task InvokeAsync(HttpContext context)
     {
-        if (_environment.IsDevelopment() && 
-            !context.Request.Headers.ContainsKey("Authorization"))
+        if (!context.Request.Headers.ContainsKey("Authorization"))
         {
             var claims = new[]
             {

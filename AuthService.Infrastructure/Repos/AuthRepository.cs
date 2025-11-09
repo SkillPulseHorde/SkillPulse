@@ -29,9 +29,9 @@ public class AuthRepository : IAuthRepository
 
     public async Task UpdateRefreshTokenUserAsync(User updatedUser, CancellationToken ct = default)
     {
-        var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Userid == updatedUser.Userid, ct);
+        var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.UserId == updatedUser.UserId, ct);
         if (user == null)
-            throw new InvalidOperationException("User не найден");
+            throw new InvalidOperationException($"User({updatedUser.UserId}) не найден");
         
         user.RefreshToken = updatedUser.RefreshToken;
         user.RefreshTokenExpiryTime = updatedUser.RefreshTokenExpiryTime;
@@ -43,7 +43,7 @@ public class AuthRepository : IAuthRepository
     {
         return await _dbContext.Users
             .AsNoTracking()
-            .FirstOrDefaultAsync(u => u.Userid == userId, ct);
+            .FirstOrDefaultAsync(u => u.UserId == userId, ct);
     }
 
     public async Task<User?> GetUserByRefreshTokenReadOnlyAsync(string refreshToken, CancellationToken ct = default)

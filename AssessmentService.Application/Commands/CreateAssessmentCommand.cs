@@ -38,7 +38,7 @@ public sealed class CreateAssessmentCommandHandler(
         {
             return Result<Guid>.Failure(Error.NotFound("Заданные пользователи не существуют"));
         }
-        
+
         var assessment = new Assessment
         {
             EvaluateeId = request.EvaluateeId,

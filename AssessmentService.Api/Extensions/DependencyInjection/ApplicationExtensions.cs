@@ -19,8 +19,7 @@ public static class ApplicationExtensions
         
         // FluentValidation
         services.AddValidatorsFromAssemblyContaining<CreateAssessmentCommand>();
-
-        // JsonOptions
+        
         services.ConfigureHttpJsonOptions(options =>
         {
             options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());

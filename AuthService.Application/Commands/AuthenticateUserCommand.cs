@@ -40,7 +40,7 @@ public sealed class AuthenticateUserCommandHandler : IRequestHandler<Authenticat
         if (!result)
             return Result<LoginResponseModel>.Failure(Error.Unauthorized("Не удалось войти в систему"));
 
-        var userFromUserService = await _userServiceClient.GetUserByIdAsync(user.Userid, ct);
+        var userFromUserService = await _userServiceClient.GetUserByIdAsync(user.UserId, ct);
 
         if (userFromUserService is null)
             return Result<LoginResponseModel>.Failure(Error.Unauthorized("Пользователь не найден в UserService"));
@@ -64,7 +64,7 @@ public sealed class AuthenticateUserCommandHandler : IRequestHandler<Authenticat
         var loginResponse = new LoginResponseModel
         {
             TokenResponse = tokens,
-            UserId = user.Userid
+            UserId = user.UserId
         };
 
         return Result<LoginResponseModel>.Success(loginResponse);
