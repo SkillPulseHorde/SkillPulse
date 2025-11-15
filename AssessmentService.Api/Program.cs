@@ -1,7 +1,9 @@
 using System.ComponentModel.DataAnnotations;
 using AssessmentService.Api;
 using AssessmentService.Api.Dto;
+using AssessmentService.Api.Dto.Evaluation;
 using AssessmentService.Application.Commands;
+using AssessmentService.Application.Commands.CommandParameters;
 using AssessmentService.Application.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -35,6 +37,8 @@ app.UseAuthorization();
 
 #region endpoints
 
+#region Assessments
+// Запустить аттестацию
 app.MapPost("/api/assessments", async (
         [FromBody] CreateAssessmentRequestDto request,
         IMediator mediator,
@@ -59,6 +63,7 @@ app.MapPost("/api/assessments", async (
     .WithSummary("Запустить аттестацию")
     .RequireAuthorization("HROnly");
 
+// Получить аттестацию по ID
 app.MapGet("/api/assessments/{assessmentId:guid}", async (
         [FromRoute] Guid assessmentId,
         IMediator mediator,
@@ -76,6 +81,8 @@ app.MapGet("/api/assessments/{assessmentId:guid}", async (
     .WithSummary("Получить аттестацию по ID")
     .RequireAuthorization("HROnly");
 
+
+// Обновить аттестацию
 app.MapPut("/api/assessments/{assessmentId:guid}", async (
         [FromRoute] Guid assessmentId,
         [FromBody] UpdateAssessmentRequestDto request,
@@ -99,6 +106,8 @@ app.MapPut("/api/assessments/{assessmentId:guid}", async (
     .WithSummary("Обновить аттестацию")
     .RequireAuthorization("HROnly");
 
+
+// Удалить аттестацию
 app.MapDelete("/api/assessments/{assessmentId:guid}", async (
         [FromRoute] Guid assessmentId,
         IMediator mediator,
@@ -116,6 +125,8 @@ app.MapDelete("/api/assessments/{assessmentId:guid}", async (
     .WithSummary("Удалить аттестацию")
     .RequireAuthorization("HROnly");
 
+
+// Получить Id рецензентов пользователя по его ID
 app.MapGet("/api/assessments/evaluators/{userId:guid}", async (
         [FromRoute] Guid userId,
         IMediator mediator,
@@ -133,6 +144,8 @@ app.MapGet("/api/assessments/evaluators/{userId:guid}", async (
     .WithSummary("Получить Id рецензентов пользователя по его ID")
     .RequireAuthorization("Authenticated");
 
+
+// Обновить список рецензентов пользователя (полная замена)
 app.MapPut("/api/assessments/evaluators/{userId:guid}", async (
         [FromRoute] Guid userId,
         [FromBody] UpdateEvaluatorsRequestDto request,
@@ -155,6 +168,8 @@ app.MapPut("/api/assessments/evaluators/{userId:guid}", async (
     .WithSummary("Обновить список рецензентов пользователя (полная замена)")
     .RequireAuthorization("Authenticated");
 
+
+// Получить список аттестаций
 app.MapGet("/api/assessments", async (
         [Required] [FromQuery] bool isActive,
         IMediator mediator,
@@ -177,6 +192,85 @@ app.MapGet("/api/assessments", async (
     })
     .RequireAuthorization("HROnly");
 
+
+// Получить активные аттестации по ID рецензента
+app.MapGet("/api/assessments/evaluator/{userId:guid}/active", async (
+        [FromRoute] Guid userId,
+        IMediator mediator,
+        CancellationToken ct) =>
+    {
+        var query = new GetActiveAssessmentsByEvaluatorIdQuery(userId);
+
+        var result = await mediator.Send(query, ct);
+
+        return result.IsSuccess
+            ? Results.Ok(result.Value.Select(a => a.ToAssessmentShortInfoResponseDto()).ToList())
+            : result.Error!.ToProblemDetails();
+    })
+    .Produces<List<AssessmentShortInfoResponseDto>>()
+    .WithSummary("Получить активные аттестации, назначенные рецензенту");
+    //.RequireAuthorization("Authenticated"); //todo
+#endregion
+
+// Получить все компетенции
+app.MapGet("/api/competences", async (IMediator mediator, CancellationToken ct) =>
+    {
+        var query = new GetAllCompetencesQuery();
+
+        var result = await mediator.Send(query, ct);
+
+        return result.IsSuccess
+            ? Results.Ok(result.Value.Select(c => new CompetenceResponseDto
+            {
+                Id = c.Id,
+                Name = c.Name,
+                Criteria = c.Criteria.Select(cr => new CriterionResponseDto
+                {
+                    Id = cr.Id,
+                    Name = cr.Name
+                }).ToList()
+            }).ToList())
+            : result.Error!.ToProblemDetails();
+    })
+    .Produces<List<CompetenceResponseDto>>()
+    .WithSummary("Получить все компетенции");
+    //.RequireAuthorization("Authenticated"); //todo
+
+
+// Отправить оценку
+app.MapPost("/api/evaluations", async (
+        [FromBody] CreateEvaluationRequestDto request,
+        IMediator mediator,
+        CancellationToken ct) =>
+    {
+        var command = new CreateEvaluationCommand
+        {
+            AssessmentId = request.AssessmentId,
+            EvaluatorId = request.EvaluatorId,
+            CompetenceEvaluations = request.CompetenceEvaluations.Select(ce =>
+                new CompetenceEvaluationCommandParameter
+                {
+                    CompetenceId = ce.CompetenceId,
+                    CompetenceComment = ce.CompetenceComment,
+                    CriterionEvaluations = ce.CriterionEvaluations.Select(cre =>
+                        new CriterionEvaluationCommandParameter
+                        {
+                            CriterionId = cre.CriterionId,
+                            Score = cre.Score,
+                            CriterionComment = cre.CriterionComment
+                        }).ToList()
+                }).ToList()
+        };
+
+        var result = await mediator.Send(command, ct);
+
+        return result.IsSuccess
+            ? Results.Ok(result.Value)
+            : result.Error!.ToProblemDetails();
+    })
+    .Produces<Guid>()
+    .WithSummary("Отправить оценку");
+//.RequireAuthorization("Authenticated"); //todo
 #endregion
 
 app.Run();

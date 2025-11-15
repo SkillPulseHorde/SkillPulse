@@ -63,10 +63,9 @@ public sealed class UserRepository : IUserRepository
             .AsNoTracking()
             .Where(u => userIds.Contains(u.Id))
             .Select(u => u.Id)
-            .Distinct()
             .CountAsync(ct);
 
-        return foundCount == userIds.Count;
+        return foundCount == userIds.Distinct().Count();
     }
     
     public async Task<List<User>> GetUsersByIdsReadonlyAsync(List<Guid> userIds, CancellationToken ct = default)

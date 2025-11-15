@@ -21,10 +21,8 @@ public sealed class UpdateAssessmentCommandHandler(
     IUserServiceClient userServiceClient)
     : IRequestHandler<UpdateAssessmentCommand, Result<Guid>>
 {
-    
     public async Task<Result<Guid>> Handle(UpdateAssessmentCommand request, CancellationToken ct)
     {
-
         // Проверяем существование всех оценщиков
         var areUsersExist = await userServiceClient.UsersExistAsync(request.EvaluatorIds, ct);
         if (!areUsersExist)
@@ -44,16 +42,31 @@ public sealed class UpdateAssessmentCommandHandler(
         }
 
         assessment.EndsAt = request.EndsAt;
-
-        // Обновляем список оценщиков
-        assessment.Evaluators.Clear();
-        foreach (var evaluatorId in request.EvaluatorIds.Distinct())
+        
+        // Проверяем, не началась ли аттестация, если пытаемся изменить список оценщиков
+        if (assessment.StartAt <= DateTime.UtcNow)
         {
-            assessment.Evaluators.Add(new AssessmentEvaluator
+            // Проверяем, изменился ли список оценщиков
+            var existingEvaluatorIds = assessment.Evaluators.Select(e => e.EvaluatorId).OrderBy(id => id).ToList();
+            var newEvaluatorIds = request.EvaluatorIds.Distinct().OrderBy(id => id).ToList();
+            
+            if (!existingEvaluatorIds.SequenceEqual(newEvaluatorIds))
             {
-                AssessmentId = assessment.Id,
-                EvaluatorId = evaluatorId
-            });
+                return Result<Guid>.Failure(Error.Validation("Нельзя изменить список оценщиков после начала аттестации"));
+            }
+        }
+        else
+        {
+            // Обновляем список оценщиков только если аттестация не началась
+            assessment.Evaluators.Clear();
+            foreach (var evaluatorId in request.EvaluatorIds.Distinct())
+            {
+                assessment.Evaluators.Add(new AssessmentEvaluator
+                {
+                    AssessmentId = assessment.Id,
+                    EvaluatorId = evaluatorId
+                });
+            }
         }
 
         await assessmentRepository.UpdateAsync(assessment, ct);

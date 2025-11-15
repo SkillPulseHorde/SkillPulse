@@ -6,16 +6,16 @@ using AssessmentService.Domain.Repos;
 
 namespace AssessmentService.Application.Queries;
 
-public sealed record GetAssessmentsQuery(bool IsActive) : IRequest<Result<List<AssessmentModel>>>;
+public sealed record GetActiveAssessmentsByEvaluatorIdQuery(Guid EvaluatorId) : IRequest<Result<List<AssessmentModel>>>;
 
-public sealed class GetAssessmentsQueryHandler(
+public sealed class GetActiveAssessmentsByEvaluatorIdQueryHandler(
     IAssessmentRepository assessmentRepository,
     IUserServiceClient userServiceClient)
-    : IRequestHandler<GetAssessmentsQuery, Result<List<AssessmentModel>>>
+    : IRequestHandler<GetActiveAssessmentsByEvaluatorIdQuery, Result<List<AssessmentModel>>>
 {
-    public async Task<Result<List<AssessmentModel>>> Handle(GetAssessmentsQuery request, CancellationToken ct)
+    public async Task<Result<List<AssessmentModel>>> Handle(GetActiveAssessmentsByEvaluatorIdQuery request, CancellationToken ct)
     {
-        var assessments = await assessmentRepository.GetAssessmentsReadonlyAsync(request.IsActive, ct);
+        var assessments = await assessmentRepository.GetActiveAssessmentsByEvaluatorIdReadonlyAsync(request.EvaluatorId, ct);
         
         if (assessments.Count == 0)
         {
@@ -32,7 +32,7 @@ public sealed class GetAssessmentsQueryHandler(
                 var user = userDict.GetValueOrDefault(a.EvaluateeId);
                 if (user == null)
                 {
-                    return null;
+                    return null; // Не включаем оценку, если пользователь не найден
                 }
                 
                 return new AssessmentModel
@@ -41,7 +41,7 @@ public sealed class GetAssessmentsQueryHandler(
                     EvaluateeId = a.EvaluateeId,
                     EvaluateeFullName = user.FullName,
                     EvaluateePosition = user.Position,
-                    EvaluateeTeamName = user.TeamName ?? null,
+                    EvaluateeTeamName = user.TeamName,
                     StartAt = a.StartAt,
                     EndsAt = a.EndsAt,
                 };

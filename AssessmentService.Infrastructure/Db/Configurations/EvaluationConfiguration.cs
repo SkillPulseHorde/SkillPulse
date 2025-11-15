@@ -12,10 +12,12 @@ public class EvaluationConfiguration : IEntityTypeConfiguration<Evaluation>
         
         builder.HasKey(x => x.Id);
 
-        builder.HasIndex(x => x.EvaluatorId);
+        builder.HasIndex(x => new { x.AssessmentId, x.EvaluatorId })
+            .IsUnique();
 
         builder.HasOne(x => x.Assessment)
-            .WithMany(x => x.Evaluations);
+            .WithMany(x => x.Evaluations)
+            .HasForeignKey(x => x.AssessmentId);
         
         builder.HasMany(x => x.CompetenceEvaluations)
             .WithOne()
