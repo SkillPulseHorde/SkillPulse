@@ -22,7 +22,6 @@ public static class GetEvaluatorsByUserId
                     : result.Error!.ToProblemDetails();
             })
             .Produces<List<Guid>>()
-            .ProducesProblem(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .WithSummary("Получить Id рецензентов пользователя по его ID")
             .RequireAuthorization("Authenticated");

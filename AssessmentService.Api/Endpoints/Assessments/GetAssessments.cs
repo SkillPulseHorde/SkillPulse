@@ -30,7 +30,6 @@ public static class GetAssessments
                 operation.Parameters[0].Description = "true - активные аттестации, false - предстоящие аттестации";
                 return operation;
             })
-            .ProducesProblem(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .RequireAuthorization("HROnly");

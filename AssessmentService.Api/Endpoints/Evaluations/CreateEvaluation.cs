@@ -41,6 +41,11 @@ public static class CreateEvaluation
                     : result.Error!.ToProblemDetails();
             })
             .Produces<Guid>()
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict)
+            .ProducesProblem(StatusCodes.Status422UnprocessableEntity)
             .WithSummary("Отправить оценку")
             .RequireAuthorization("Authenticated");
 

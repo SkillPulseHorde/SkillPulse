@@ -23,7 +23,6 @@ public static class GetActiveAssessmentsByEvaluatorId
                     : result.Error!.ToProblemDetails();
             })
             .Produces<List<AssessmentShortInfoResponseDto>>()
-            .ProducesProblem(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .WithSummary("Получить активные аттестации, назначенные рецензенту")
             .RequireAuthorization("Authenticated");

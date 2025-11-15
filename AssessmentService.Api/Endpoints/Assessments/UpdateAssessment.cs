@@ -29,7 +29,6 @@ public static class UpdateAssessment
                     : result.Error!.ToProblemDetails();
             })
             .Produces<Guid>()
-            .ProducesProblem(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status404NotFound)
