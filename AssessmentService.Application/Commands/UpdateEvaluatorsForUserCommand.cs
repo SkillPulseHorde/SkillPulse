@@ -17,10 +17,8 @@ public sealed class UpdateEvaluatorsForUserCommandHandler(
     IUserServiceClient userServiceClient)
     : IRequestHandler<UpdateEvaluatorsForUserCommand, Result>
 {
-
     public async Task<Result> Handle(UpdateEvaluatorsForUserCommand request, CancellationToken cancellationToken)
     {
-        
         var allUserIdsToCheck = request.EvaluatorIds
             .Append(request.UserId)
             .ToList();

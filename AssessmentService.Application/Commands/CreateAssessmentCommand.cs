@@ -25,7 +25,6 @@ public sealed class CreateAssessmentCommandHandler(
     IUserServiceClient userServiceClient)
     : IRequestHandler<CreateAssessmentCommand, Result<Guid>>
 {
-
     public async Task<Result<Guid>> Handle(CreateAssessmentCommand request, CancellationToken ct)
     {
         var allUserIdsToCheck = request.EvaluatorIds

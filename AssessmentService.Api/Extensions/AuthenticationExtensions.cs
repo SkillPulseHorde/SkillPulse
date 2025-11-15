@@ -1,6 +1,6 @@
 ﻿using Common.Shared.Auth.Extensions;
 
-namespace AssessmentService.Api.Extensions.DependencyInjection;
+namespace AssessmentService.Api.Extensions;
 
 public static class AuthenticationExtensions
 {

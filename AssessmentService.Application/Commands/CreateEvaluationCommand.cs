@@ -22,12 +22,8 @@ public sealed class CreateEvaluationCommandHandler(
     ICompetenceRepository competenceRepository)
     : IRequestHandler<CreateEvaluationCommand, Result<Guid>>
 {
-    private readonly CreateEvaluationCommandValidator _validator = new(); //todo DI
-    
     public async Task<Result<Guid>> Handle(CreateEvaluationCommand request, CancellationToken ct)
     {
-        await _validator.ValidateAndThrowAsync(request, cancellationToken: ct);
-        
         var assessment = await assessmentRepository.GetByIdReadonlyAsync(request.AssessmentId, ct);
         if (assessment == null)
             return Result<Guid>.Failure(Error.NotFound($"Аттестация с ID {request.AssessmentId} не найдена"));
