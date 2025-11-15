@@ -3,7 +3,7 @@ using AssessmentService.Application.Behaviors;
 using AssessmentService.Application.Commands;
 using FluentValidation;
 
-namespace AssessmentService.Api.Extensions.DependencyInjection;
+namespace AssessmentService.Api.Extensions;
 
 public static class ApplicationExtensions
 {

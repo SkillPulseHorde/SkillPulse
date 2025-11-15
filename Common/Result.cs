@@ -21,7 +21,7 @@ public class Result
     }
 
     public static Result Success() => new(true, null);
-    public static Result Failure(Error error) => new (false, error);
+    public static Result Failure(Error error) => new(false, error);
 
     public static TResult Failure<TResult>(Error error) where TResult : Result, new()
     {
@@ -57,4 +57,10 @@ public class Result<T> : Result
 
     public static Result<T> Success(T value) => new(value);
     public new static Result<T> Failure(Error error) => new(error);
+    
+    public static implicit operator Result<T>(T value) =>
+        Success(value);
+
+    public static implicit operator Result<T>(Error error) =>
+        Failure(error);
 }

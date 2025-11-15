@@ -1,11 +1,11 @@
-﻿using AssessmentService.Domain.Repos;
+﻿using AssessmentService.Api.Extensions.ServiceRegistration;
+using AssessmentService.Domain.Repos;
 using AssessmentService.Infrastructure.Db;
-using AssessmentService.Infrastructure.Repos;
 using AssessmentService.Infrastructure.Http.ServiceClientOptions;
-using AssessmentService.Api.Extensions.ServiceCollectionExtensions;
+using AssessmentService.Infrastructure.Repos;
 using Microsoft.EntityFrameworkCore;
 
-namespace AssessmentService.Api.Extensions.DependencyInjection;
+namespace AssessmentService.Api.Extensions;
 
 public static class InfrastructureExtensions
 {
@@ -20,7 +20,11 @@ public static class InfrastructureExtensions
         // Репозитории
         services.AddScoped<IAssessmentRepository, AssessmentRepository>();
         services.AddScoped<IEvaluationRepository, EvaluationRepository>();
-
+        services.AddScoped<ICompetenceEvaluationRepository, CompetenceEvaluationRepository>();
+        services.AddScoped<ICompetenceRepository, CompetenceRepository>();
+        services.AddScoped<ICriterionEvaluationRepository, CriterionEvaluationRepository>();
+        services.AddScoped<IUserEvaluatorRepository, UserEvaluatorRepository>();
+        
         // Клиенты
         services.Configure<UserServiceOptions>(configuration);
         services.AddUserServiceClient(configuration);

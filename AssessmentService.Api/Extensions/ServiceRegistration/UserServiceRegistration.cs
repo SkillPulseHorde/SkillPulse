@@ -3,7 +3,7 @@ using AssessmentService.Infrastructure.Http.ServiceClientOptions;
 using AssessmentService.Infrastructure.Http.ServiceClients;
 using Microsoft.Extensions.Options;
 
-namespace AssessmentService.Api.Extensions.ServiceCollectionExtensions;
+namespace AssessmentService.Api.Extensions.ServiceRegistration;
 
 public static class UserServiceRegistration
 {

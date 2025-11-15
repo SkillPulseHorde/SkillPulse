@@ -13,14 +13,12 @@ public sealed record UpdateEvaluatorsForUserCommand : IRequest<Result>
 }
 
 public sealed class UpdateEvaluatorsForUserCommandHandler(
-    IAssessmentRepository assessmentRepository,
+    IUserEvaluatorRepository userEvaluatorRepository,
     IUserServiceClient userServiceClient)
     : IRequestHandler<UpdateEvaluatorsForUserCommand, Result>
 {
-
     public async Task<Result> Handle(UpdateEvaluatorsForUserCommand request, CancellationToken cancellationToken)
     {
-        
         var allUserIdsToCheck = request.EvaluatorIds
             .Append(request.UserId)
             .ToList();
@@ -32,7 +30,7 @@ public sealed class UpdateEvaluatorsForUserCommandHandler(
             return Result.Failure(Error.NotFound("Заданные пользователи не существуют"));
         }
 
-        await assessmentRepository.UpdateEvaluatorsForUserAsync(request.UserId, request.EvaluatorIds, cancellationToken);
+        await userEvaluatorRepository.UpdateEvaluatorsForUserAsync(request.UserId, request.EvaluatorIds, cancellationToken);
 
         return Result.Success();
     }

@@ -44,9 +44,12 @@ app.MapGet("/api/users/{id:guid}", async (Guid id, IMediator mediator, Cancellat
             ? Results.Ok(result.Value)
             : result.Error!.ToProblemDetails();
     })
-    .RequireAuthorization()
     .Produces<UserModel>()
-    .WithSummary("Получить пользователя по ID");
+    .ProducesProblem(StatusCodes.Status200OK)
+    .ProducesProblem(StatusCodes.Status401Unauthorized)
+    .ProducesProblem(StatusCodes.Status404NotFound)
+    .WithSummary("Получить пользователя по ID")
+    .RequireAuthorization("Authenticated");
 
 
 app.MapGet("/api/users", async (
@@ -68,6 +71,9 @@ app.MapGet("/api/users", async (
         return operation;
     })
     .Produces<List<UserShortInfoDto>>()
+    .ProducesProblem(StatusCodes.Status200OK)
+    .ProducesProblem(StatusCodes.Status401Unauthorized)
+    .ProducesProblem(StatusCodes.Status404NotFound)
     .WithSummary("Получить всех пользователей, начиная со своей команды")
     .RequireAuthorization("Authenticated");
 
@@ -95,9 +101,13 @@ app.MapGet("/api/users/{id:guid}/subordinates", async (Guid id, IMediator mediat
             ? Results.Ok(result.Value)
             : result.Error!.ToProblemDetails();
     })
-    .RequireAuthorization("HRAndManagers")
     .Produces<List<UserModel>>()
-    .WithSummary("Получить подчиненных пользователя по его ID");
+    .ProducesProblem(StatusCodes.Status200OK)
+    .ProducesProblem(StatusCodes.Status401Unauthorized)
+    .ProducesProblem(StatusCodes.Status403Forbidden)
+    .ProducesProblem(StatusCodes.Status404NotFound)
+    .WithSummary("Получить подчиненных пользователя по его ID")
+    .RequireAuthorization("HRAndManagers");
 
 app.MapPost("/api/users/exist", async (
         [FromBody] CheckUsersExistRequestDto request,

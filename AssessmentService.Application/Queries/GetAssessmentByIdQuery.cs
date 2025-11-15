@@ -19,7 +19,7 @@ public sealed class GetAssessmentByIdQueryHandler(
 
         if (assessment is null)
         {
-            return Result<AssessmentDetailModel>.Failure(Error.NotFound($"Аттестация с ID {request.AssessmentId} не найдена"));
+            return Error.NotFound($"Аттестация с ID {request.AssessmentId} не найдена");
         }
         
         var evaluatorIds = assessment.Evaluators.Select(e => e.EvaluatorId).ToList();
@@ -45,6 +45,6 @@ public sealed class GetAssessmentByIdQueryHandler(
             EvaluatorIds = evaluatorIds
         };
 
-        return Result<AssessmentDetailModel>.Success(model);
+        return model;
     }
 }

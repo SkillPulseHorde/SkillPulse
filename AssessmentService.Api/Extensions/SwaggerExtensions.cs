@@ -1,6 +1,6 @@
 ﻿using Microsoft.OpenApi.Models;
 
-namespace AssessmentService.Api.Extensions.DependencyInjection;
+namespace AssessmentService.Api.Extensions;
 
 public static class SwaggerExtensions
 {

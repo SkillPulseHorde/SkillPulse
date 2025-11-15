@@ -14,22 +14,19 @@ public sealed class EvaluationRepository : IEvaluationRepository
         _dbContext = dbContext;
     }
 
+    // todo: Пока не используется, изменится 
     public async Task<Evaluation?> GetByIdAsync(Guid id, CancellationToken ct = default)
     {
         return await _dbContext.Evaluations
+            .Include(e => e.Assessment)
+            .Include(e => e.CompetenceEvaluations!)
+                .ThenInclude(ce => ce.CriterionEvaluations)
             .FirstOrDefaultAsync(e => e.Id == id, ct);
     }
 
     public async Task<Guid> CreateAsync(Evaluation evaluation, CancellationToken ct = default)
     {
-        evaluation.SubmittedAt = DateTime.UtcNow;
         await _dbContext.Evaluations.AddAsync(evaluation, ct);
-        return evaluation.Id;
-    }
-
-    public async Task<Guid> UpdateAsync(Evaluation evaluation, CancellationToken ct = default)
-    {
-        _dbContext.Evaluations.Update(evaluation);
         await _dbContext.SaveChangesAsync(ct);
         return evaluation.Id;
     }

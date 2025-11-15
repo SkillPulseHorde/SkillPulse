@@ -2,6 +2,9 @@
 
 public class CriterionEvaluation
 {
+    public const int MinScore = 1;
+    public const int MaxScore = 10;
+    
     public required Guid Id { get; init; }
     
     public required Guid CriterionId { get; init; }
