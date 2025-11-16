@@ -17,25 +17,38 @@ public sealed class GetAssessmentsQueryHandler(
     {
         var assessments = await assessmentRepository.GetAssessmentsReadonlyAsync(request.IsActive, ct);
         
+        if (assessments.Count == 0)
+        {
+            return new List<AssessmentModel>();
+        }
+        
         var evaluateeIds = assessments.Select(a => a.EvaluateeId).Distinct().ToList();
         var users = await userServiceClient.GetUsersByIdsAsync(evaluateeIds, ct);
         var userDict = users.ToDictionary(u => u.Id, u => u);
 
-        var assessmentModels = assessments.Select(a =>
-        {
-            var user = userDict.GetValueOrDefault(a.EvaluateeId);
-            return new AssessmentModel
+        var assessmentModels = assessments
+            .Select(a =>
             {
-                Id = a.Id,
-                EvaluateeId = a.EvaluateeId,
-                EvaluateeFullName = user?.FullName,
-                EvaluateePosition = user?.Position,
-                EvaluateeTeamName = user?.TeamName,
-                StartAt = a.StartAt,
-                EndsAt = a.EndsAt,
-            };
-        }).ToList();
+                var user = userDict.GetValueOrDefault(a.EvaluateeId);
+                if (user == null)
+                {
+                    return null;
+                }
+                
+                return new AssessmentModel
+                {
+                    Id = a.Id,
+                    EvaluateeId = a.EvaluateeId,
+                    EvaluateeFullName = user.FullName,
+                    EvaluateePosition = user.Position,
+                    EvaluateeTeamName = user.TeamName,
+                    StartAt = a.StartAt,
+                    EndsAt = a.EndsAt,
+                };
+            })
+            .OfType<AssessmentModel>()
+            .ToList();
         
-        return Result<List<AssessmentModel>>.Success(assessmentModels);
+        return assessmentModels;
     }
 }

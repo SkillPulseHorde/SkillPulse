@@ -190,9 +190,8 @@ namespace AssessmentService.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AssessmentId");
-
-                    b.HasIndex("EvaluatorId");
+                    b.HasIndex("AssessmentId", "EvaluatorId")
+                        .IsUnique();
 
                     b.ToTable("Evaluations", (string)null);
                 });

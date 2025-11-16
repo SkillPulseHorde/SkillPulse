@@ -29,4 +29,7 @@ public class Error
     
     public static Error Unauthorized(string msg) =>
         new($"unauthorized", msg);
+    
+    public static Error Forbidden(string msg) =>
+        new($"forbidden", msg);
 }

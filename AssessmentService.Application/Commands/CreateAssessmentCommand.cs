@@ -25,7 +25,6 @@ public sealed class CreateAssessmentCommandHandler(
     IUserServiceClient userServiceClient)
     : IRequestHandler<CreateAssessmentCommand, Result<Guid>>
 {
-
     public async Task<Result<Guid>> Handle(CreateAssessmentCommand request, CancellationToken ct)
     {
         var allUserIdsToCheck = request.EvaluatorIds
@@ -33,7 +32,7 @@ public sealed class CreateAssessmentCommandHandler(
             .Append(request.EvaluateeId)
             .ToList();
         
-        var areUsersExist = await userServiceClient.UsersExistAsync(allUserIdsToCheck, ct);
+        var areUsersExist = await userServiceClient.AreUsersExistAsync(allUserIdsToCheck, ct);
         if (!areUsersExist)
         {
             return Result<Guid>.Failure(Error.NotFound("Заданные пользователи не существуют"));

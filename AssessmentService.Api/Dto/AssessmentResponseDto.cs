@@ -6,8 +6,8 @@ public sealed record AssessmentResponseDto
 {
     public required Guid Id { get; init; }
     public required Guid EvaluateeId { get; init; }
-    public string? EvaluateeFullName { get; init; }
-    public string? EvaluateePosition { get; init; }
+    public required string EvaluateeFullName { get; init; }
+    public required string EvaluateePosition { get; init; }
     public string? EvaluateeTeamName { get; init; }
     public required DateTime StartAt { get; init; }
     public required DateTime EndsAt { get; init; }

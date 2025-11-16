@@ -17,7 +17,7 @@ public class AssessmentEvaluatorConfiguration : IEntityTypeConfiguration<Assessm
             .HasForeignKey(x => x.AssessmentId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Индекс для быстрого поиска всех назначенных аттестаций 
+        // Индекс для быстрого поиска всех назначенных аттестаций
         builder.HasIndex(x => x.EvaluatorId);
     }
 }
