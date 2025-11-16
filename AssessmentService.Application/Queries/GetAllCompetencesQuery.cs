@@ -27,7 +27,7 @@ public sealed class GetAllCompetencesQueryHandler(ICompetenceRepository competen
             })
             .ToList();
 
-        return Result<List<CompetenceModel>>.Success(competenceModels);
+        return competenceModels;
     }
 }
 

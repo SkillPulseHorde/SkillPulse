@@ -19,7 +19,7 @@ public sealed class GetAssessmentsQueryHandler(
         
         if (assessments.Count == 0)
         {
-            return Result<List<AssessmentModel>>.Success([]);
+            return new List<AssessmentModel>();
         }
         
         var evaluateeIds = assessments.Select(a => a.EvaluateeId).Distinct().ToList();
@@ -41,7 +41,7 @@ public sealed class GetAssessmentsQueryHandler(
                     EvaluateeId = a.EvaluateeId,
                     EvaluateeFullName = user.FullName,
                     EvaluateePosition = user.Position,
-                    EvaluateeTeamName = user.TeamName ?? null,
+                    EvaluateeTeamName = user.TeamName,
                     StartAt = a.StartAt,
                     EndsAt = a.EndsAt,
                 };
@@ -49,6 +49,6 @@ public sealed class GetAssessmentsQueryHandler(
             .OfType<AssessmentModel>()
             .ToList();
         
-        return Result<List<AssessmentModel>>.Success(assessmentModels);
+        return assessmentModels;
     }
 }

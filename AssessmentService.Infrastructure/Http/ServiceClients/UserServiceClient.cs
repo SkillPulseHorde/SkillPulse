@@ -16,7 +16,7 @@ public sealed class UserServiceClient(
     private readonly string _internalToken = options.Value.InternalToken;
     private const string BaseUrl = "/api/users";
     
-    public async Task<bool> UsersExistAsync(List<Guid> userIds, CancellationToken ct)
+    public async Task<bool> AreUsersExistAsync(List<Guid> userIds, CancellationToken ct)
     {
         var requestDto = new CheckUsersExistRequestDto
         {

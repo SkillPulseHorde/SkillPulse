@@ -23,13 +23,13 @@ public sealed class AreUsersExistQueryHandler : IRequestHandler<AreUsersExistQue
     }
 }
 
-// public sealed class AreUsersExistQueryValidator : AbstractValidator<AreUsersExistQuery>
-// {
-//     public AreUsersExistQueryValidator()
-//     {
-//         RuleFor(x => x.UserIds)
-//             .NotNull().WithMessage("Список идентификаторов не должен быть null.")
-//             .Must(ids => ids.All(id => id != Guid.Empty))
-//             .WithMessage("Список не должен содержать пустых идентификаторов.");
-//     }
-// }
+public sealed class AreUsersExistQueryValidator : AbstractValidator<AreUsersExistQuery>
+{
+    public AreUsersExistQueryValidator()
+    {
+        RuleFor(x => x.UserIds)
+            .NotNull().WithMessage("Список идентификаторов не должен быть null.")
+            .Must(ids => ids.All(id => id != Guid.Empty))
+            .WithMessage("Список не должен содержать пустых идентификаторов.");
+    }
+}

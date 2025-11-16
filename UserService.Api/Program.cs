@@ -45,7 +45,6 @@ app.MapGet("/api/users/{id:guid}", async (Guid id, IMediator mediator, Cancellat
             : result.Error!.ToProblemDetails();
     })
     .Produces<UserModel>()
-    .ProducesProblem(StatusCodes.Status200OK)
     .ProducesProblem(StatusCodes.Status401Unauthorized)
     .ProducesProblem(StatusCodes.Status404NotFound)
     .WithSummary("Получить пользователя по ID")
@@ -71,7 +70,6 @@ app.MapGet("/api/users", async (
         return operation;
     })
     .Produces<List<UserShortInfoDto>>()
-    .ProducesProblem(StatusCodes.Status200OK)
     .ProducesProblem(StatusCodes.Status401Unauthorized)
     .ProducesProblem(StatusCodes.Status404NotFound)
     .WithSummary("Получить всех пользователей, начиная со своей команды")
@@ -102,7 +100,6 @@ app.MapGet("/api/users/{id:guid}/subordinates", async (Guid id, IMediator mediat
             : result.Error!.ToProblemDetails();
     })
     .Produces<List<UserModel>>()
-    .ProducesProblem(StatusCodes.Status200OK)
     .ProducesProblem(StatusCodes.Status401Unauthorized)
     .ProducesProblem(StatusCodes.Status403Forbidden)
     .ProducesProblem(StatusCodes.Status404NotFound)

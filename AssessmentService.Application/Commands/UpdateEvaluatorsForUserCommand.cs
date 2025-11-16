@@ -24,7 +24,7 @@ public sealed class UpdateEvaluatorsForUserCommandHandler(
             .ToList();
         
         // существуют ли рецензенты и текущий пользователь
-        var areUsersExist = await userServiceClient.UsersExistAsync(allUserIdsToCheck, cancellationToken);
+        var areUsersExist = await userServiceClient.AreUsersExistAsync(allUserIdsToCheck, cancellationToken);
         if (!areUsersExist)
         {
             return Result.Failure(Error.NotFound("Заданные пользователи не существуют"));

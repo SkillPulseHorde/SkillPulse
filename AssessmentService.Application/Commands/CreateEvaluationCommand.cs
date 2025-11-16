@@ -41,7 +41,7 @@ public sealed class CreateEvaluationCommandHandler(
         // Проверяем существование всех компетенций
         var competenceIds = request.CompetenceEvaluations.Select(ce => ce.CompetenceId).ToList();
         var existingCompetences = await competenceRepository.GetByIdsAsync(competenceIds, ct);
-        if (existingCompetences.Count != competenceIds.Distinct().Count())
+        if (existingCompetences.Count != competenceIds.Count)
         {
             return Result<Guid>.Failure(Error.NotFound("Не все компетенции найдены"));
         }

@@ -15,6 +15,10 @@ public sealed class GetActiveAssessmentsByEvaluatorIdQueryHandler(
 {
     public async Task<Result<List<AssessmentModel>>> Handle(GetActiveAssessmentsByEvaluatorIdQuery request, CancellationToken ct)
     {
+        var isEvaluatorExists = await userServiceClient.AreUsersExistAsync([request.EvaluatorId], ct);
+        if (!isEvaluatorExists)
+            return Error.NotFound($"Пользователь {request.EvaluatorId} не найден.");
+        
         var assessments = await assessmentRepository.GetActiveAssessmentsByEvaluatorIdReadonlyAsync(request.EvaluatorId, ct);
         
         if (assessments.Count == 0)
@@ -32,7 +36,7 @@ public sealed class GetActiveAssessmentsByEvaluatorIdQueryHandler(
                 var user = userDict.GetValueOrDefault(a.EvaluateeId);
                 if (user == null)
                 {
-                    return null; // Не включаем оценку, если пользователь не найден
+                    return null; // Не включаем аттестацию, если пользователь не найден
                 }
                 
                 return new AssessmentModel
@@ -49,6 +53,6 @@ public sealed class GetActiveAssessmentsByEvaluatorIdQueryHandler(
             .OfType<AssessmentModel>()
             .ToList();
         
-        return Result<List<AssessmentModel>>.Success(assessmentModels);
+        return assessmentModels;
     }
 }

@@ -38,7 +38,7 @@ app.MapPost("/api/auth/register", async ([FromBody] RegistrationRequest request,
         ? Results.Ok()
         : result.Error!.ToProblemDetails();
 })
-.Produces(statusCode: StatusCodes.Status200OK)
+.Produces(StatusCodes.Status200OK)
 .AllowAnonymous()
 .WithSummary("Зарегистрировать пользователя")
 .WithDescription("Возвращает только статус-код");
@@ -129,7 +129,7 @@ app.MapPost("/api/auth/logout", async (HttpContext httpContext, IMediator mediat
         ? Results.Ok()
         : result.Error!.ToProblemDetails();
 })
-.Produces(statusCode: StatusCodes.Status200OK)  
+.Produces(StatusCodes.Status200OK)  
 .WithSummary("Выйти из системы")
 .WithDescription("Удаляет refresh token и инвалидирует сессию")
 .RequireAuthorization("Authenticated");

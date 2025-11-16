@@ -24,21 +24,21 @@ public sealed class UpdateAssessmentCommandHandler(
     public async Task<Result<Guid>> Handle(UpdateAssessmentCommand request, CancellationToken ct)
     {
         // Проверяем существование всех оценщиков
-        var areUsersExist = await userServiceClient.UsersExistAsync(request.EvaluatorIds, ct);
+        var areUsersExist = await userServiceClient.AreUsersExistAsync(request.EvaluatorIds, ct);
         if (!areUsersExist)
         {
-            return Result<Guid>.Failure(Error.NotFound("Один или несколько оценщиков не существуют"));
+            return Error.NotFound("Один или несколько оценщиков не существуют");
         }
 
         var assessment = await assessmentRepository.GetByIdReadonlyAsync(request.AssessmentId, ct);
         if (assessment == null)
         {
-            return Result<Guid>.Failure(Error.NotFound("Аттестация не найдена"));
+            return Error.NotFound("Аттестация не найдена");
         }
 
         if (assessment.EndsAt < DateTime.UtcNow)
         {
-            return Result<Guid>.Failure(Error.Validation("Нельзя изменить завершенную аттестацию"));
+            return Error.Validation("Нельзя изменить завершенную аттестацию");
         }
 
         assessment.EndsAt = request.EndsAt;
@@ -52,7 +52,7 @@ public sealed class UpdateAssessmentCommandHandler(
             
             if (!existingEvaluatorIds.SequenceEqual(newEvaluatorIds))
             {
-                return Result<Guid>.Failure(Error.Validation("Нельзя изменить список оценщиков после начала аттестации"));
+                return Error.Validation("Нельзя изменить список оценщиков после начала аттестации");
             }
         }
         else
@@ -71,7 +71,7 @@ public sealed class UpdateAssessmentCommandHandler(
 
         await assessmentRepository.UpdateAsync(assessment, ct);
 
-        return Result<Guid>.Success(assessment.Id);
+        return assessment.Id;
     }
 }
 

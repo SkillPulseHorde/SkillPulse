@@ -32,7 +32,7 @@ public sealed class CreateAssessmentCommandHandler(
             .Append(request.EvaluateeId)
             .ToList();
         
-        var areUsersExist = await userServiceClient.UsersExistAsync(allUserIdsToCheck, ct);
+        var areUsersExist = await userServiceClient.AreUsersExistAsync(allUserIdsToCheck, ct);
         if (!areUsersExist)
         {
             return Result<Guid>.Failure(Error.NotFound("Заданные пользователи не существуют"));

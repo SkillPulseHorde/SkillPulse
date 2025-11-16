@@ -15,16 +15,8 @@ public static class GetAllCompetences
                 var result = await mediator.Send(query, ct);
 
                 return result.IsSuccess
-                    ? Results.Ok(result.Value.Select(c => new CompetenceResponseDto
-                    {
-                        Id = c.Id,
-                        Name = c.Name,
-                        Criteria = c.Criteria.Select(cr => new CriterionResponseDto
-                        {
-                            Id = cr.Id,
-                            Name = cr.Name
-                        }).ToList()
-                    }).ToList())
+                    ? Results.Ok(result.Value.Select(c => c.ToDto())
+                        .ToList())
                     : result.Error!.ToProblemDetails();
             })
             .Produces<List<CompetenceResponseDto>>()
