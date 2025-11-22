@@ -1,6 +1,7 @@
 using AssessmentService.Api.Dto.Evaluation;
 using AssessmentService.Application.Commands;
 using AssessmentService.Application.Commands.CommandParameters;
+using Common.Shared.Auth.Extensions;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -11,20 +12,23 @@ public static class CreateEvaluation
     public static IEndpointRouteBuilder MapCreateEvaluationEndpoint(this IEndpointRouteBuilder app)
     {
         app.MapPost("/api/evaluations", async (
+                HttpContext httpContext,
                 [FromBody] CreateEvaluationRequestDto request,
                 IMediator mediator,
                 CancellationToken ct) =>
             {
+                var userRole = httpContext.User.GetUserRole();
                 var command = new CreateEvaluationCommand
                 {
                     AssessmentId = request.AssessmentId,
                     EvaluatorId = request.EvaluatorId,
+                    EvaluatorRole = userRole,
                     CompetenceEvaluations = request.CompetenceEvaluations.Select(ce =>
                         new CompetenceEvaluationCommandParameter
                         {
                             CompetenceId = ce.CompetenceId,
                             CompetenceComment = ce.CompetenceComment,
-                            CriterionEvaluations = ce.CriterionEvaluations.Select(cre =>
+                            CriterionEvaluations = ce.CriterionEvaluations?.Select(cre =>
                                 new CriterionEvaluationCommandParameter
                                 {
                                     CriterionId = cre.CriterionId,

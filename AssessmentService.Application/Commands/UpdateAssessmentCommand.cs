@@ -26,20 +26,16 @@ public sealed class UpdateAssessmentCommandHandler(
         // Проверяем существование всех оценщиков
         var areUsersExist = await userServiceClient.AreUsersExistAsync(request.EvaluatorIds, ct);
         if (!areUsersExist)
-        {
             return Error.NotFound("Один или несколько оценщиков не существуют");
-        }
 
         var assessment = await assessmentRepository.GetByIdReadonlyAsync(request.AssessmentId, ct);
         if (assessment == null)
-        {
             return Error.NotFound("Аттестация не найдена");
-        }
 
         if (assessment.EndsAt < DateTime.UtcNow)
-        {
             return Error.Validation("Нельзя изменить завершенную аттестацию");
-        }
+        if (request.EndsAt <= assessment.StartAt)
+            return Error.Validation("Дата завершения должна быть позже даты начала аттестации");
 
         assessment.EndsAt = request.EndsAt;
         
@@ -51,9 +47,7 @@ public sealed class UpdateAssessmentCommandHandler(
             var newEvaluatorIds = request.EvaluatorIds.Distinct().OrderBy(id => id).ToList();
             
             if (!existingEvaluatorIds.SequenceEqual(newEvaluatorIds))
-            {
                 return Error.Validation("Нельзя изменить список оценщиков после начала аттестации");
-            }
         }
         else
         {

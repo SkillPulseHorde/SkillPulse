@@ -16,6 +16,6 @@ public sealed class GetUsersByIdsQueryHandler(IUserRepository repo)
         
         var userModels = users.Select(u => u.ToAppModel()).ToList();
         
-        return Result<List<UserModel>>.Success(userModels);
+        return userModels;
     }
 }

@@ -38,6 +38,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AssessmentService.Domain", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AssessmentService.Infrastructure", "AssessmentService.Infrastructure\AssessmentService.Infrastructure.csproj", "{315CC45D-8C4F-46E9-A552-8664BA7614B4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AssessmentService.Tests", "AssessmentService.Tests\AssessmentService.Tests.csproj", "{2A716CE4-EC97-4B0A-B2B1-88F42B2CF41F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -100,6 +102,10 @@ Global
 		{315CC45D-8C4F-46E9-A552-8664BA7614B4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{315CC45D-8C4F-46E9-A552-8664BA7614B4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{315CC45D-8C4F-46E9-A552-8664BA7614B4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2A716CE4-EC97-4B0A-B2B1-88F42B2CF41F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2A716CE4-EC97-4B0A-B2B1-88F42B2CF41F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2A716CE4-EC97-4B0A-B2B1-88F42B2CF41F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2A716CE4-EC97-4B0A-B2B1-88F42B2CF41F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{5B8CA87E-A72B-4BCC-A555-70853D6EAB06} = {86D93BD1-BFD0-4CC8-B0A5-2118C55A3A1E}
@@ -120,5 +126,6 @@ Global
 		{93FE72B8-C9ED-48C8-9465-4DD755C44839} = {4500A987-B713-430D-B3AE-E0F6DC05928B}
 		{FA7739C0-294E-42DA-A171-D6BE9A90BF16} = {4500A987-B713-430D-B3AE-E0F6DC05928B}
 		{EF3EEA68-0F12-48C9-B04F-C1273EA93F50} = {4500A987-B713-430D-B3AE-E0F6DC05928B}
+		{2A716CE4-EC97-4B0A-B2B1-88F42B2CF41F} = {C23D83DC-5E50-4CE7-A96E-53EEC3E47DF0}
 	EndGlobalSection
 EndGlobal

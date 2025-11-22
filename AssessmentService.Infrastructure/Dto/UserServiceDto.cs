@@ -8,4 +8,5 @@ public sealed record UserServiceDto
     public string? MidName { get; init; }
     public required string TeamName { get; init; }
     public required string Position { get; init; }
+    public required string Grade { get; init; }
 }

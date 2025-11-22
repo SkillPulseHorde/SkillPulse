@@ -78,4 +78,14 @@ public class AssessmentRepository : IAssessmentRepository
             .ThenBy(a => a.StartAt)
             .ToListAsync(ct);
     }
+
+    public Task<List<Assessment>> GetCompletedAssessmentsByEvaluateeIdReadonlyAsync(Guid evaluateeId, CancellationToken ct = default)
+    {
+        return _dbContext.Assessments
+            .AsNoTracking()
+            .Where(a => a.EvaluateeId == evaluateeId && a.EndsAt <= DateTime.UtcNow)
+            .OrderByDescending(a => a.EndsAt)
+            .ThenByDescending(a => a.StartAt)
+            .ToListAsync(ct);
+    }
 }
