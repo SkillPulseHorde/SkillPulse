@@ -1,6 +1,8 @@
 ﻿using System.Text.Json.Serialization;
+using AssessmentService.Application;
 using AssessmentService.Application.Behaviors;
 using AssessmentService.Application.Commands;
+using AssessmentService.Domain;
 using FluentValidation;
 
 namespace AssessmentService.Api.Extensions;
@@ -24,6 +26,9 @@ public static class ApplicationExtensions
         {
             options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
         });
+        
+        // Inner services
+        services.AddScoped<IEvaluationAnalyzer, EvaluationAnalyzer>();
 
         return services;
     }

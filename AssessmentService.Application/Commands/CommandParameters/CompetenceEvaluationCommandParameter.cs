@@ -6,5 +6,5 @@ public sealed record CompetenceEvaluationCommandParameter
     
     public required string CompetenceComment { get; init; }
     
-    public required List<CriterionEvaluationCommandParameter> CriterionEvaluations { get; init; }
+    public required List<CriterionEvaluationCommandParameter>? CriterionEvaluations { get; init; }
 }

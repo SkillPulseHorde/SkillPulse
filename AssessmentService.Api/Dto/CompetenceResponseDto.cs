@@ -13,6 +13,8 @@ public class CriterionResponseDto
 {
     public Guid Id { get; set; }
     public required string Name { get; set; }
+    
+    public required bool IsMandatory { get; set; }
 }
 
 public static class CompetenceResponseDtoExtensions
@@ -26,7 +28,8 @@ public static class CompetenceResponseDtoExtensions
             Criteria = competence.Criteria.Select(c => new CriterionResponseDto
             {
                 Id = c.Id,
-                Name = c.Name
+                Name = c.Name,
+                IsMandatory = c.IsMandatory
             }).ToList()
         };
     }

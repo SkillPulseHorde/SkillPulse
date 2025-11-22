@@ -1,3 +1,4 @@
+using AssessmentService.Api.Endpoints.AssessmentResults;
 using AssessmentService.Api.Endpoints.Assessments;
 using AssessmentService.Api.Endpoints.Competences;
 using AssessmentService.Api.Endpoints.Evaluations;
@@ -16,6 +17,7 @@ public static class EndpointExtensions
         app.MapUpdateEvaluatorsForUserEndpoint();
         app.MapGetAssessmentsEndpoint();
         app.MapGetActiveAssessmentsByEvaluatorIdEndpoint();
+        app.MapGetCompletedAssessmentsByEvaluateeIdEndpoint();
 
         return app;
     }
@@ -34,13 +36,20 @@ public static class EndpointExtensions
         return app;
     }
 
+    private static IEndpointRouteBuilder MapAssessmentResultEndpoints(this IEndpointRouteBuilder app)
+    {
+        app.MapGetAssessmentResultEndpoint();
+
+        return app;
+    }
+
     public static IEndpointRouteBuilder MapAllEndpoints(this IEndpointRouteBuilder app)
     {
         app.MapAssessmentEndpoints();
         app.MapCompetenceEndpoints();
         app.MapEvaluationEndpoints();
+        app.MapAssessmentResultEndpoints();
 
         return app;
     }
 }
-

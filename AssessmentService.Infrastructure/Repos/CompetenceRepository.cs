@@ -29,4 +29,16 @@ public class CompetenceRepository : ICompetenceRepository
             .Where(c => competenceIds.Contains(c.Id))
             .ToListAsync(ct);
     }
+
+    public async Task<Dictionary<Guid, List<Guid>>> GetCompetenceCriteriaMapAsync(CancellationToken ct = default)
+    {
+        var competences = await _dbContext.Competences
+            .Include(c => c.Criteria)
+            .AsNoTracking()
+            .ToListAsync(ct);
+        
+        return competences.ToDictionary(
+            c => c.Id,
+            c => c.Criteria.Select(cr => cr.Id).ToList());
+    }
 }

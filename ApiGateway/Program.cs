@@ -25,7 +25,6 @@ app.UseSwaggerUI(c =>
     c.SwaggerEndpoint("/swagger/authservice/swagger.json", "AuthService");
 });
 
-app.MapGet("/ping", () => Results.Text("pong")); // TODO: Тест, потом убрать 
 
 app.MapReverseProxy();
 

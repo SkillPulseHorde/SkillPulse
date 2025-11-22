@@ -2,5 +2,5 @@
 
 public sealed record CompetenceSummary(
     double AverageScore,
-    Dictionary<string, CriterionSummary> CriterionSummaries,
+    Dictionary<Guid, CriterionSummary> CriterionSummaries,
     List<string> Comments);
