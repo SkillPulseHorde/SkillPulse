@@ -33,7 +33,7 @@ public sealed class UserServiceClient : IUserServiceClient
 
     public async Task<Guid?> GetUserIdByEmailAsync(string email, CancellationToken ct = default)
     {
-        using var request  = new HttpRequestMessage(HttpMethod.Get, $"{BaseUrl}/{email}/id");
+        using var request = new HttpRequestMessage(HttpMethod.Get, $"{BaseUrl}/{email}/id");
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _internalToken);
         
         using var response = await _httpClient.SendAsync(request, ct);

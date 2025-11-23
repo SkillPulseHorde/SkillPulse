@@ -28,7 +28,7 @@ public sealed class UpdateAssessmentCommandHandler(
         if (!areUsersExist)
             return Error.NotFound("Один или несколько оценщиков не существуют");
 
-        var assessment = await assessmentRepository.GetByIdReadonlyAsync(request.AssessmentId, ct);
+        var assessment = await assessmentRepository.GetByIdAsync(request.AssessmentId, ct);
         if (assessment == null)
             return Error.NotFound("Аттестация не найдена");
 
@@ -49,9 +49,11 @@ public sealed class UpdateAssessmentCommandHandler(
             if (!existingEvaluatorIds.SequenceEqual(newEvaluatorIds))
                 return Error.Validation("Нельзя изменить список оценщиков после начала аттестации");
         }
-        else
+        else // Обновляем список оценщиков только если аттестация не началась
         {
-            // Обновляем список оценщиков только если аттестация не началась
+            if (request.EvaluatorIds.Contains(assessment.EvaluateeId))
+                return Error.Validation("Оцениваемый пользователь не может быть оценщиком в своей аттестации");
+            
             assessment.Evaluators.Clear();
             foreach (var evaluatorId in request.EvaluatorIds.Distinct())
             {

@@ -4,26 +4,26 @@ namespace AssessmentService.Api.Dto;
 
 public sealed record AssessmentResponseDto
 {
-    public required Guid Id { get; init; }
-    public required Guid EvaluateeId { get; init; }
-    public required string EvaluateeFullName { get; init; }
-    public required string EvaluateePosition { get; init; }
-    public string? EvaluateeTeamName { get; init; }
+    public required Guid AssessmentId { get; init; }
     public required DateTime StartAt { get; init; }
     public required DateTime EndsAt { get; init; }
+    public required EvaluateeShortInfoDto EvaluateeInfo { get; init; }
 }
 
-public static class AssessmentResponseDtoExtensions
+public static class AssessmentShortInfoWithEvaluateeResponseDtoExtensions
 {
     public static AssessmentResponseDto ToResponseDto(this AssessmentModel model) =>
         new()
         {
-            Id = model.Id,
-            EvaluateeId = model.EvaluateeId,
-            EvaluateeFullName = model.EvaluateeFullName,
-            EvaluateePosition = model.EvaluateePosition,
-            EvaluateeTeamName = model.EvaluateeTeamName,
+            AssessmentId = model.Id,
             StartAt = model.StartAt,
-            EndsAt = model.EndsAt
+            EndsAt = model.EndsAt,
+            EvaluateeInfo = new EvaluateeShortInfoDto
+            {
+                Id = model.EvaluateeId,
+                FullName = model.EvaluateeFullName,
+                Position = model.EvaluateePosition,
+                TeamName = model.EvaluateeTeamName
+            }
         };
 }

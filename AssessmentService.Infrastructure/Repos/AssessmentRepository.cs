@@ -29,6 +29,13 @@ public class AssessmentRepository : IAssessmentRepository
             .AsNoTracking()
             .FirstOrDefaultAsync(a => a.Id == assessmentId, ct);
     }
+    
+    public async Task<Assessment?> GetByIdAsync(Guid assessmentId, CancellationToken ct = default)
+    {
+        return await _dbContext.Assessments
+            .Include(a => a.Evaluators)
+            .FirstOrDefaultAsync(a => a.Id == assessmentId, ct);
+    }
 
     public async Task<Guid> UpdateAsync(Assessment assessment, CancellationToken ct = default)
     {

@@ -578,12 +578,12 @@ public class EvaluationAnalyzerTests
         // Assert
         Assert.NotNull(result);
         Assert.Equal(2, result.Data.CompetenceSummaries.Count);
-        
-        Assert.True(result.Data.CompetenceSummaries.ContainsKey(competence1Id));
-        Assert.Equal(7.0, result.Data.CompetenceSummaries[competence1Id]!.AverageScore);
-        
-        Assert.True(result.Data.CompetenceSummaries.ContainsKey(competence2Id));
-        Assert.Equal(9.0, result.Data.CompetenceSummaries[competence2Id]!.AverageScore);
+
+        Assert.True(result.Data.CompetenceSummaries.TryGetValue(competence1Id, out var competence1Summary));
+        Assert.Equal(7.0, competence1Summary!.AverageScore);
+
+        Assert.True(result.Data.CompetenceSummaries.TryGetValue(competence2Id, out var competence2Summary));
+        Assert.Equal(9.0, competence2Summary!.AverageScore);
     }
 
     [Fact]

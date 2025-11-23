@@ -50,15 +50,13 @@ public sealed class CreateEvaluationCommandHandler(
         }
         
         // Проверяем, что все критерии принадлежат соответствующим компетенциям
-        foreach (var compEval in request.CompetenceEvaluations)
+        foreach (var compEval in request.CompetenceEvaluations
+                     .Where(ce => ce.CriterionEvaluations != null))
         {
-            if (compEval.CriterionEvaluations == null)
-                continue;
-            
             var competence = existingCompetences.FirstOrDefault(c => c.Id == compEval.CompetenceId);
             if (competence == null) continue;
             
-            var criterionIds = compEval.CriterionEvaluations.Select(ce => ce.CriterionId).ToList();
+            var criterionIds = compEval.CriterionEvaluations!.Select(ce => ce.CriterionId).ToList();
             var validCriterionIds = competence.Criteria.Select(cr => cr.Id).ToHashSet();
             
             if (criterionIds.Any(cid => !validCriterionIds.Contains(cid)))
@@ -85,7 +83,7 @@ public sealed class CreateEvaluationCommandHandler(
                     Id = competenceEvaluationId,
                     CompetenceId = ce.CompetenceId,
                     EvaluationId = evaluationId,
-                    Comment = ce.CompetenceComment,
+                    Comment = ce.CompetenceComment ?? string.Empty,
                     CriterionEvaluations = ce.CriterionEvaluations?.Select(cre => new CriterionEvaluation
                     {
                         Id = Guid.NewGuid(),
@@ -121,6 +119,10 @@ public class CreateEvaluationCommandValidator : AbstractValidator<CreateEvaluati
             
             comp.When(c => c.CriterionEvaluations != null, () =>
             {
+                comp.RuleFor(c => c.CompetenceComment)
+                    .NotEmpty()
+                    .WithMessage("Комментарий к компетенции обязателен");
+                
                 comp.RuleFor(c => c.CriterionEvaluations)
                     .NotEmpty().WithMessage("Список оценок критериев не должен быть пустым")
                     .Must(cre => cre!.Select(cr => cr.CriterionId).Distinct().Count() == cre!.Count)

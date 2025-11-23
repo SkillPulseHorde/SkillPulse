@@ -22,6 +22,6 @@ public static class ClaimsPrincipalExtensions
 
         return string.IsNullOrEmpty(role) 
             ? throw new UnauthorizedAccessException("Роль не найдена в токене") 
-            : role; // Возможно, стоит поменять тип исключения 
+            : role;
     }
 }

@@ -6,5 +6,5 @@ public sealed record CompetenceEvaluationDto
     
     public List<CriterionEvaluationDto>? CriterionEvaluations { get; init; }
     
-    public required string CompetenceComment { get; init; }
+    public string? CompetenceComment { get; init; }
 };

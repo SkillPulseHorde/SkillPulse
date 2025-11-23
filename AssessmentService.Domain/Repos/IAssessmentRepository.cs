@@ -8,6 +8,8 @@ public interface IAssessmentRepository
 
     Task<Assessment?> GetByIdReadonlyAsync(Guid assessmentId, CancellationToken ct = default);
 
+    Task<Assessment?> GetByIdAsync(Guid assessmentId, CancellationToken ct = default);
+
     Task<Guid> UpdateAsync(Assessment assessment, CancellationToken ct = default);
 
     Task<bool> DeleteAsync(Guid assessmentId, CancellationToken ct = default);
