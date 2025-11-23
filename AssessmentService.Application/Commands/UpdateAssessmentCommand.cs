@@ -18,7 +18,8 @@ public sealed record UpdateAssessmentCommand : IRequest<Result<Guid>>
 
 public sealed class UpdateAssessmentCommandHandler(
     IAssessmentRepository assessmentRepository,
-    IUserServiceClient userServiceClient)
+    IUserServiceClient userServiceClient,
+    IUserEvaluatorRepository userEvaluatorRepository)
     : IRequestHandler<UpdateAssessmentCommand, Result<Guid>>
 {
     public async Task<Result<Guid>> Handle(UpdateAssessmentCommand request, CancellationToken ct)
@@ -63,6 +64,12 @@ public sealed class UpdateAssessmentCommandHandler(
                     EvaluatorId = evaluatorId
                 });
             }
+            
+            // Обновляем список оценщиков глобально для пользователя
+            await userEvaluatorRepository.UpdateEvaluatorsForUserAsync(
+                assessment.EvaluateeId, 
+                request.EvaluatorIds.Distinct().ToList(),
+                ct);
         }
 
         await assessmentRepository.UpdateAsync(assessment, ct);

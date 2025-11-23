@@ -22,7 +22,8 @@ public sealed record CreateAssessmentCommand : IRequest<Result<Guid>>
 
 public sealed class CreateAssessmentCommandHandler(
     IAssessmentRepository assessmentRepository,
-    IUserServiceClient userServiceClient)
+    IUserServiceClient userServiceClient,
+    IUserEvaluatorRepository userEvaluatorRepository)
     : IRequestHandler<CreateAssessmentCommand, Result<Guid>>
 {
     public async Task<Result<Guid>> Handle(CreateAssessmentCommand request, CancellationToken ct)
@@ -35,8 +36,9 @@ public sealed class CreateAssessmentCommandHandler(
         var areUsersExist = await userServiceClient.AreUsersExistAsync(allUserIdsToCheck, ct);
         if (!areUsersExist)
         {
-            return Result<Guid>.Failure(Error.NotFound("Заданные пользователи не существуют"));
+            return Error.NotFound("Заданные пользователи не существуют");
         }
+        
 
         var assessment = new Assessment
         {
@@ -54,7 +56,10 @@ public sealed class CreateAssessmentCommandHandler(
         
         var createdAssessmentId = await assessmentRepository.CreateAsync(assessment, ct);
         
-        return Result<Guid>.Success(createdAssessmentId);
+        // Обновляем список оценщиков глобально для пользователя
+        await userEvaluatorRepository.UpdateEvaluatorsForUserAsync(request.EvaluateeId, request.EvaluatorIds.Distinct().ToList(), ct);
+        
+        return createdAssessmentId;
     }
 }
 
