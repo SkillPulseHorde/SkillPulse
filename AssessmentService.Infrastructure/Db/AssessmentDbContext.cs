@@ -14,6 +14,7 @@ public class AssessmentDbContext : DbContext
     public DbSet<Criterion> Criteria => Set<Criterion>();
     public DbSet<UserEvaluator> UserEvaluators => Set<UserEvaluator>();
     public DbSet<AssessmentEvaluator> AssessmentEvaluators => Set<AssessmentEvaluator>();
+    public DbSet<AssessmentResult> AssessmentResults => Set<AssessmentResult>();
 
 
     public AssessmentDbContext(DbContextOptions<AssessmentDbContext> options) : base(options)

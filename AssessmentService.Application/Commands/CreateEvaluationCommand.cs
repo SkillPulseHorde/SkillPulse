@@ -2,6 +2,7 @@
 using AssessmentService.Domain.Entities;
 using AssessmentService.Domain.Repos;
 using Common;
+using Common.Shared.Auth.Constants;
 using MediatR;
 using FluentValidation;
 
@@ -12,6 +13,8 @@ public sealed record CreateEvaluationCommand : IRequest<Result<Guid>>
     public required Guid AssessmentId { get; init; }
     
     public required Guid EvaluatorId { get; init; }
+    
+    public required string EvaluatorRole { get; init; }
     
     public required List<CompetenceEvaluationCommandParameter> CompetenceEvaluations { get; init; }
 }
@@ -47,26 +50,29 @@ public sealed class CreateEvaluationCommandHandler(
         }
         
         // Проверяем, что все критерии принадлежат соответствующим компетенциям
-        foreach (var compEval in request.CompetenceEvaluations)
+        foreach (var compEval in request.CompetenceEvaluations
+                     .Where(ce => ce.CriterionEvaluations != null))
         {
             var competence = existingCompetences.FirstOrDefault(c => c.Id == compEval.CompetenceId);
             if (competence == null) continue;
             
-            var criterionIds = compEval.CriterionEvaluations.Select(ce => ce.CriterionId).ToList();
+            var criterionIds = compEval.CriterionEvaluations!.Select(ce => ce.CriterionId).ToList();
             var validCriterionIds = competence.Criteria.Select(cr => cr.Id).ToHashSet();
             
             if (criterionIds.Any(cid => !validCriterionIds.Contains(cid)))
-            {
-                return Result<Guid>.Failure(
-                    Error.Conflict($"Не все критерии принадлежат компетенции {competence.Name}"));
-            }
+                return Error.Conflict($"Не все критерии в компетенции '{competence.Name}' принадлежат ей");
         }
+
+        var roleRatio = Roles.AllManagersAndHr.Contains(request.EvaluatorRole) 
+            ? Evaluation.ManagerScoreRatio
+            : Evaluation.DefaultScoreRatio;
         
         var evaluationId = Guid.NewGuid();
         var evaluation = new Evaluation
         {
             Id = evaluationId,
             EvaluatorId = request.EvaluatorId,
+            RoleRatio = roleRatio,
             AssessmentId = request.AssessmentId,
             SubmittedAt = DateTime.UtcNow,
             CompetenceEvaluations = request.CompetenceEvaluations.Select(ce =>
@@ -77,8 +83,8 @@ public sealed class CreateEvaluationCommandHandler(
                     Id = competenceEvaluationId,
                     CompetenceId = ce.CompetenceId,
                     EvaluationId = evaluationId,
-                    Comment = ce.CompetenceComment,
-                    CriterionEvaluations = ce.CriterionEvaluations.Select(cre => new CriterionEvaluation
+                    Comment = ce.CompetenceComment ?? string.Empty,
+                    CriterionEvaluations = ce.CriterionEvaluations?.Select(cre => new CriterionEvaluation
                     {
                         Id = Guid.NewGuid(),
                         CriterionId = cre.CriterionId,
@@ -92,7 +98,7 @@ public sealed class CreateEvaluationCommandHandler(
         
         var createdEvaluationId = await evaluationRepository.CreateAsync(evaluation, ct);
         
-        return Result<Guid>.Success(createdEvaluationId);
+        return createdEvaluationId;
     }
 }
 
@@ -110,19 +116,26 @@ public class CreateEvaluationCommandValidator : AbstractValidator<CreateEvaluati
         RuleForEach(x => x.CompetenceEvaluations).ChildRules(comp =>
         {
             comp.RuleFor(c => c.CompetenceId).NotEmpty();
-            comp.RuleFor(c => c.CompetenceComment).NotEmpty().WithMessage("Комментарий к компетенции обязателен");
-            comp.RuleFor(c => c.CriterionEvaluations)
-                .NotEmpty().WithMessage("Список оценок критериев не должен быть пустым")
-                .Must(cre => cre.Select(cr => cr.CriterionId).Distinct().Count() == cre.Count)
-                .WithMessage("Критерии не должны повторяться");
             
-            comp.RuleForEach(c => c.CriterionEvaluations).ChildRules(crit =>
+            comp.When(c => c.CriterionEvaluations != null, () =>
             {
-                crit.RuleFor(cr => cr.CriterionId).NotEmpty();
-                crit.RuleFor(cr => cr.Score)
-                    .InclusiveBetween(CriterionEvaluation.MinScore, CriterionEvaluation.MaxScore)
-                    .When(cr => cr.Score.HasValue)
-                    .WithMessage($"Оценка должна быть от {CriterionEvaluation.MinScore} до {CriterionEvaluation.MaxScore}");
+                comp.RuleFor(c => c.CompetenceComment)
+                    .NotEmpty()
+                    .WithMessage("Комментарий к компетенции обязателен");
+                
+                comp.RuleFor(c => c.CriterionEvaluations)
+                    .NotEmpty().WithMessage("Список оценок критериев не должен быть пустым")
+                    .Must(cre => cre!.Select(cr => cr.CriterionId).Distinct().Count() == cre!.Count)
+                    .WithMessage("Критерии не должны повторяться");
+                
+                comp.RuleForEach(c => c.CriterionEvaluations).ChildRules(crit =>
+                {
+                    crit.RuleFor(cr => cr.CriterionId).NotEmpty();
+                    crit.RuleFor(cr => cr.Score)
+                        .InclusiveBetween(CriterionEvaluation.MinScore, CriterionEvaluation.MaxScore)
+                        .When(cr => cr.Score.HasValue)
+                        .WithMessage($"Оценка должна быть от {CriterionEvaluation.MinScore} до {CriterionEvaluation.MaxScore}");
+                });
             });
         });
     }

@@ -1,6 +1,7 @@
 using AssessmentService.Api.Dto;
 using AssessmentService.Application.Queries;
 using MediatR;
+using Microsoft.AspNetCore.Mvc;
 
 namespace AssessmentService.Api.Endpoints.Competences;
 
@@ -8,9 +9,12 @@ public static class GetAllCompetences
 {
     public static IEndpointRouteBuilder MapGetAllCompetencesEndpoint(this IEndpointRouteBuilder app)
     {
-        app.MapGet("/api/competences", async (IMediator mediator, CancellationToken ct) =>
+        app.MapGet("/api/competences/{evaluateeId:guid}", async (
+                [FromRoute] Guid evaluateeId,
+                IMediator mediator,
+                CancellationToken ct) =>
             {
-                var query = new GetAllCompetencesQuery();
+                var query = new GetAllCompetencesQuery(evaluateeId);
 
                 var result = await mediator.Send(query, ct);
 

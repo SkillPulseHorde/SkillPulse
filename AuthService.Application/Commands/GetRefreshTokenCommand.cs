@@ -31,7 +31,6 @@ public sealed class GetRefreshTokenCommandHandler : IRequestHandler<GetRefreshTo
 
     public async Task<Result<TokensModel>> Handle(GetRefreshTokenCommand request, CancellationToken ct)
     {
-        
         var user = await _authRepository.GetUserByRefreshTokenReadOnlyAsync(request.RefreshToken, ct);
         if (user is null)
             return Result<TokensModel>.Failure(Error.Unauthorized("Ошибка авторизации"));

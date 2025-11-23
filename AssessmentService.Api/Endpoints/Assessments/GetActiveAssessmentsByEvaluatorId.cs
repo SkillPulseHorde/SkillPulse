@@ -19,11 +19,12 @@ public static class GetActiveAssessmentsByEvaluatorId
                 var result = await mediator.Send(query, ct);
 
                 return result.IsSuccess
-                    ? Results.Ok(result.Value.Select(a => a.ToAssessmentShortInfoResponseDto()).ToList())
+                    ? Results.Ok(result.Value.Select(a => a.ToResponseDto()).ToList())
                     : result.Error!.ToProblemDetails();
             })
-            .Produces<List<AssessmentShortInfoResponseDto>>()
+            .Produces<List<AssessmentResponseDto>>()
             .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
             .WithSummary("Получить активные аттестации, назначенные рецензенту")
             .RequireAuthorization("Authenticated");
 

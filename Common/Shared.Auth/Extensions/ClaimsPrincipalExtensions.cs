@@ -15,4 +15,13 @@ public static class ClaimsPrincipalExtensions
             ? throw new InvalidOperationException("Неправильный формат User ID в токене") 
             : userId;
     }
+    
+    public static string GetUserRole(this ClaimsPrincipal user)
+    {
+        var role = user.FindFirstValue(ClaimsIdentity.DefaultRoleClaimType);
+
+        return string.IsNullOrEmpty(role) 
+            ? throw new UnauthorizedAccessException("Роль не найдена в токене") 
+            : role;
+    }
 }

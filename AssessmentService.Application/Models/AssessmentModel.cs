@@ -1,6 +1,6 @@
 ﻿namespace AssessmentService.Application.Models;
 
-public sealed class AssessmentModel
+public sealed record AssessmentModel
 {
     public Guid Id { get; init; }
     public Guid EvaluateeId { get; init; }

@@ -4,7 +4,7 @@ public sealed record CompetenceEvaluationDto
 {
     public required Guid CompetenceId { get; init; }
     
-    public required List<CriterionEvaluationDto> CriterionEvaluations { get; init; }
+    public List<CriterionEvaluationDto>? CriterionEvaluations { get; init; }
     
-    public required string CompetenceComment { get; init; }
+    public string? CompetenceComment { get; init; }
 };

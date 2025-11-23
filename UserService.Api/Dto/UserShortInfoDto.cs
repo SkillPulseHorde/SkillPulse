@@ -9,7 +9,8 @@ public sealed record UserShortInfoDto(
     string LastName,
     string? MidName,
     string TeamName,
-    Position Position);
+    Position Position,
+    Grade Grade);
 
 public static class UserShortInfoDtoExtensions
 {
@@ -20,7 +21,8 @@ public static class UserShortInfoDtoExtensions
             user.LastName,
             user.MidName,
             user.TeamName ?? string.Empty,
-            user.Position);
+            user.Position,
+            user.Grade);
     
     public static UserShortInfoDto ToDto(this UserModel userModel) =>
         new(
@@ -29,5 +31,6 @@ public static class UserShortInfoDtoExtensions
             userModel.LastName,
             userModel.MidName,
             userModel.TeamName ?? string.Empty,
-            userModel.Position);
+            userModel.Position,
+            userModel.Grade);
 }

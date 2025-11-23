@@ -32,14 +32,17 @@ public sealed class GetAssessmentByIdQueryHandler(
         var userDict = users.ToDictionary(u => u.Id, u => u);
 
         var evaluatee = userDict.GetValueOrDefault(assessment.EvaluateeId);
+        if (evaluatee == null)
+            return Error.NotFound($"Оцениваемый пользователь с ID {assessment.EvaluateeId} не найден");
+
         
         var model = new AssessmentDetailModel
         {
             Id = assessment.Id,
             EvaluateeId = assessment.EvaluateeId,
-            EvaluateeFullName = evaluatee?.FullName,
-            EvaluateePosition = evaluatee?.Position,
-            EvaluateeTeamName = evaluatee?.TeamName,
+            EvaluateeFullName = evaluatee.FullName,
+            EvaluateePosition = evaluatee.Position,
+            EvaluateeTeamName = evaluatee.TeamName,
             StartAt = assessment.StartAt,
             EndsAt = assessment.EndsAt,
             EvaluatorIds = evaluatorIds

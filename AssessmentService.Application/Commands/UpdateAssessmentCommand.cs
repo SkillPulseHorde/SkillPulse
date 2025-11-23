@@ -18,7 +18,8 @@ public sealed record UpdateAssessmentCommand : IRequest<Result<Guid>>
 
 public sealed class UpdateAssessmentCommandHandler(
     IAssessmentRepository assessmentRepository,
-    IUserServiceClient userServiceClient)
+    IUserServiceClient userServiceClient,
+    IUserEvaluatorRepository userEvaluatorRepository)
     : IRequestHandler<UpdateAssessmentCommand, Result<Guid>>
 {
     public async Task<Result<Guid>> Handle(UpdateAssessmentCommand request, CancellationToken ct)
@@ -26,20 +27,16 @@ public sealed class UpdateAssessmentCommandHandler(
         // Проверяем существование всех оценщиков
         var areUsersExist = await userServiceClient.AreUsersExistAsync(request.EvaluatorIds, ct);
         if (!areUsersExist)
-        {
             return Error.NotFound("Один или несколько оценщиков не существуют");
-        }
 
-        var assessment = await assessmentRepository.GetByIdReadonlyAsync(request.AssessmentId, ct);
+        var assessment = await assessmentRepository.GetByIdAsync(request.AssessmentId, ct);
         if (assessment == null)
-        {
             return Error.NotFound("Аттестация не найдена");
-        }
 
         if (assessment.EndsAt < DateTime.UtcNow)
-        {
             return Error.Validation("Нельзя изменить завершенную аттестацию");
-        }
+        if (request.EndsAt <= assessment.StartAt)
+            return Error.Validation("Дата завершения должна быть позже даты начала аттестации");
 
         assessment.EndsAt = request.EndsAt;
         
@@ -51,13 +48,13 @@ public sealed class UpdateAssessmentCommandHandler(
             var newEvaluatorIds = request.EvaluatorIds.Distinct().OrderBy(id => id).ToList();
             
             if (!existingEvaluatorIds.SequenceEqual(newEvaluatorIds))
-            {
                 return Error.Validation("Нельзя изменить список оценщиков после начала аттестации");
-            }
         }
-        else
+        else // Обновляем список оценщиков только если аттестация не началась
         {
-            // Обновляем список оценщиков только если аттестация не началась
+            if (request.EvaluatorIds.Contains(assessment.EvaluateeId))
+                return Error.Validation("Оцениваемый пользователь не может быть оценщиком в своей аттестации");
+            
             assessment.Evaluators.Clear();
             foreach (var evaluatorId in request.EvaluatorIds.Distinct())
             {
@@ -67,6 +64,12 @@ public sealed class UpdateAssessmentCommandHandler(
                     EvaluatorId = evaluatorId
                 });
             }
+            
+            // Обновляем список оценщиков глобально для пользователя
+            await userEvaluatorRepository.UpdateEvaluatorsForUserAsync(
+                assessment.EvaluateeId, 
+                request.EvaluatorIds.Distinct().ToList(),
+                ct);
         }
 
         await assessmentRepository.UpdateAsync(assessment, ct);

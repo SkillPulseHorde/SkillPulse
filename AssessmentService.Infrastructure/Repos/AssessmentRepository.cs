@@ -29,6 +29,13 @@ public class AssessmentRepository : IAssessmentRepository
             .AsNoTracking()
             .FirstOrDefaultAsync(a => a.Id == assessmentId, ct);
     }
+    
+    public async Task<Assessment?> GetByIdAsync(Guid assessmentId, CancellationToken ct = default)
+    {
+        return await _dbContext.Assessments
+            .Include(a => a.Evaluators)
+            .FirstOrDefaultAsync(a => a.Id == assessmentId, ct);
+    }
 
     public async Task<Guid> UpdateAsync(Assessment assessment, CancellationToken ct = default)
     {
@@ -76,6 +83,16 @@ public class AssessmentRepository : IAssessmentRepository
                         && a.EndsAt > now)
             .OrderBy(a => a.EndsAt)
             .ThenBy(a => a.StartAt)
+            .ToListAsync(ct);
+    }
+
+    public Task<List<Assessment>> GetCompletedAssessmentsByEvaluateeIdReadonlyAsync(Guid evaluateeId, CancellationToken ct = default)
+    {
+        return _dbContext.Assessments
+            .AsNoTracking()
+            .Where(a => a.EvaluateeId == evaluateeId && a.EndsAt <= DateTime.UtcNow)
+            .OrderByDescending(a => a.EndsAt)
+            .ThenByDescending(a => a.StartAt)
             .ToListAsync(ct);
     }
 }

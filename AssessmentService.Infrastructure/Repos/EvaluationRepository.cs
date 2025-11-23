@@ -13,15 +13,15 @@ public sealed class EvaluationRepository : IEvaluationRepository
     {
         _dbContext = dbContext;
     }
-
-    // todo: Пока не используется, изменится 
-    public async Task<Evaluation?> GetByIdAsync(Guid id, CancellationToken ct = default)
+    
+    public async Task<Evaluation[]> GetEvaluationsByAssessmentIdReadonlyAsync(Guid assessmentId, CancellationToken ct = default)
     {
         return await _dbContext.Evaluations
-            .Include(e => e.Assessment)
+            .AsNoTracking()
+            .Where(e => e.AssessmentId == assessmentId)
             .Include(e => e.CompetenceEvaluations!)
                 .ThenInclude(ce => ce.CriterionEvaluations)
-            .FirstOrDefaultAsync(e => e.Id == id, ct);
+            .ToArrayAsync(ct);
     }
 
     public async Task<Guid> CreateAsync(Evaluation evaluation, CancellationToken ct = default)

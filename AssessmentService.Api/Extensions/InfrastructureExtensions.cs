@@ -20,10 +20,10 @@ public static class InfrastructureExtensions
         // Репозитории
         services.AddScoped<IAssessmentRepository, AssessmentRepository>();
         services.AddScoped<IEvaluationRepository, EvaluationRepository>();
-        services.AddScoped<ICompetenceEvaluationRepository, CompetenceEvaluationRepository>();
         services.AddScoped<ICompetenceRepository, CompetenceRepository>();
-        services.AddScoped<ICriterionEvaluationRepository, CriterionEvaluationRepository>();
         services.AddScoped<IUserEvaluatorRepository, UserEvaluatorRepository>();
+        services.AddScoped<IAssessmentResultRepository, AssessmentResultRepository>();
+        
         
         // Клиенты
         services.Configure<UserServiceOptions>(configuration);

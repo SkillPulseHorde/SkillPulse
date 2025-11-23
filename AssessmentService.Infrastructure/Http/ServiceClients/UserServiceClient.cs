@@ -2,6 +2,7 @@
 using System.Net.Http.Json;
 using AssessmentService.Application.Models;
 using AssessmentService.Application.ServiceClientsAbstract;
+using AssessmentService.Domain.Entities;
 using AssessmentService.Infrastructure.Dto;
 using AssessmentService.Infrastructure.Http.ServiceClientOptions;
 using Microsoft.Extensions.Options;
@@ -54,8 +55,8 @@ public sealed class UserServiceClient(
             Id = u.Id,
             FullName = $"{u.LastName} {u.FirstName}{(string.IsNullOrEmpty(u.MidName) ? "" : " " + u.MidName)}",
             Position = u.Position,
-            TeamName = u.TeamName
+            TeamName = u.TeamName,
+            Grade = Enum.TryParse<EmployeeGrade>(u.Grade, out var grade) ? grade : EmployeeGrade.NA
         }).ToList() ?? [];
     }
 }
-    
