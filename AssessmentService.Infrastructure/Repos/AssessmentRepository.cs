@@ -80,7 +80,8 @@ public class AssessmentRepository : IAssessmentRepository
             .AsNoTracking()
             .Where(a => a.Evaluators.Any(e => e.EvaluatorId == evaluatorId)
                         && a.StartAt <= now 
-                        && a.EndsAt > now)
+                        && a.EndsAt > now
+                        && a.Evaluations.All(e => e.EvaluatorId != evaluatorId)) // evaluator ещё не оценил
             .OrderBy(a => a.EndsAt)
             .ThenBy(a => a.StartAt)
             .ToListAsync(ct);

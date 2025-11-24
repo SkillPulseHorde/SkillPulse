@@ -25,7 +25,7 @@ public static class GetActiveAssessmentsByEvaluatorId
             .Produces<List<AssessmentResponseDto>>()
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status401Unauthorized)
-            .WithSummary("Получить активные аттестации, назначенные рецензенту")
+            .WithSummary("Получить активные, ещё не оценённые аттестации, назначенные рецензенту")
             .RequireAuthorization("Authenticated");
 
         return app;

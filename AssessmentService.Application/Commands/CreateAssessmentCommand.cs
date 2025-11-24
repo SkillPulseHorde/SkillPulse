@@ -70,7 +70,7 @@ public class CreateAssessmentCommandValidator : AbstractValidator<CreateAssessme
         RuleFor(x => x.EvaluateeId).NotEmpty();
         RuleFor(x => x.EvaluatorIds).NotEmpty();
         RuleFor(x => x.StartAt).LessThan(x => x.EndsAt)
-            .WithMessage("StartAt должно быть раньше, чем  EndsAt");
+            .WithMessage("StartAt должно быть раньше, чем EndsAt");
         RuleFor(x => x.StartAt).GreaterThanOrEqualTo(DateTime.UtcNow.Date)
             .WithMessage("StartAt не может быть раньше текущей даты");
     }

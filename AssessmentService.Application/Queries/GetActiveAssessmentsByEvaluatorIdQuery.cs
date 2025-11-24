@@ -22,9 +22,8 @@ public sealed class GetActiveAssessmentsByEvaluatorIdQueryHandler(
         var assessments = await assessmentRepository.GetActiveAssessmentsByEvaluatorIdReadonlyAsync(request.EvaluatorId, ct);
         
         if (assessments.Count == 0)
-        {
             return Result<List<AssessmentModel>>.Success([]);
-        }
+
         
         var evaluateeIds = assessments.Select(a => a.EvaluateeId).Distinct().ToList();
         var users = await userServiceClient.GetUsersByIdsAsync(evaluateeIds, ct);
