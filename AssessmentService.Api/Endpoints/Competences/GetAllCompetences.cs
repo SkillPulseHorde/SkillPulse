@@ -9,7 +9,7 @@ public static class GetAllCompetences
 {
     public static IEndpointRouteBuilder MapGetAllCompetencesEndpoint(this IEndpointRouteBuilder app)
     {
-        app.MapGet("/api/competences/{evaluateeId:guid}", async (
+        app.MapGet("/api/assessments/competences/{evaluateeId:guid}", async (
                 [FromRoute] Guid evaluateeId,
                 IMediator mediator,
                 CancellationToken ct) =>

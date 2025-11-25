@@ -27,7 +27,7 @@ public static class GetAssessmentById
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .WithSummary("Получить аттестацию по ID")
-            .RequireAuthorization("HROnly");
+            .RequireAuthorization("Authenticated");
 
         return app;
     }

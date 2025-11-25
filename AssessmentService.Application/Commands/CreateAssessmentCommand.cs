@@ -35,9 +35,7 @@ public sealed class CreateAssessmentCommandHandler(
         
         var areUsersExist = await userServiceClient.AreUsersExistAsync(allUserIdsToCheck, ct);
         if (!areUsersExist)
-        {
             return Error.NotFound("Заданные пользователи не существуют");
-        }
         
 
         var assessment = new Assessment
