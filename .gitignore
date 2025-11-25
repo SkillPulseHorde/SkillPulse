@@ -3,7 +3,11 @@ obj/
 /packages/
 riderModule.iml
 /_ReSharper.Caches/
+.idea/
 .env
 AuthService.Api/AuthService.Api.http
 UserService.Api/UserService.http
 ApiGateway/ApiGateway.http
+AssessmentService.Api/AssessmentService.Api.http
+*.DotSettings.user
+docker-compose.nodb.yml

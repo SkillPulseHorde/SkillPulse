@@ -26,4 +26,17 @@ public class AssessmentResultRepository : IAssessmentResultRepository
         return await _dbContext.AssessmentResults
             .FirstOrDefaultAsync(ar => ar.AssessmentId == assessmentId, ct);
     }
+
+    public async Task<List<AssessmentResult>> GetByAssessmentIdsAsync(List<Guid> assessmentIds, CancellationToken ct = default)
+    {
+        return await _dbContext.AssessmentResults
+            .Where(ar => assessmentIds.Contains(ar.AssessmentId))
+            .ToListAsync(ct);
+    }
+
+    public async Task CreateRangeAsync(List<AssessmentResult> assessmentResults, CancellationToken ct = default)
+    {
+        await _dbContext.AssessmentResults.AddRangeAsync(assessmentResults, ct);
+        await _dbContext.SaveChangesAsync(ct);
+    }
 }
