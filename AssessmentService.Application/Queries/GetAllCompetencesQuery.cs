@@ -20,7 +20,6 @@ public sealed class GetAllCompetencesQueryHandler(
         var userInfo = await userServiceClient.GetUsersByIdsAsync([request.EvaluateeId], ct);
         if (userInfo.Count == 0)
             return Error.NotFound($"Пользователь с ID {request.EvaluateeId} не найден");
-
         
         var userGrade = userInfo.First().Grade;
 

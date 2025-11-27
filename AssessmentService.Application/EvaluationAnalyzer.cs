@@ -27,19 +27,16 @@ public sealed class EvaluationAnalyzer(
         
         var competenceCriteriaMap = await competenceRepository.GetCompetenceCriteriaMapAsync(ct);
         
-        var resultsToCreate = new List<AssessmentResult>();
-
-        foreach (var assessmentId in assessmentIds)
-        {
-            // Если для этой оценки нет evaluations, пропускаем
-            if (!evaluationsByAssessmentId.TryGetValue(assessmentId, out var evaluations) || evaluations.Length == 0)
-                continue;
-
-            var assessmentResult = CalculateAssessmentResult(assessmentId, evaluations, competenceCriteriaMap);
-            
-            if (assessmentResult is not null)
-                resultsToCreate.Add(assessmentResult);
-        }
+        var resultsToCreate = assessmentIds
+            .Where(assessmentId => evaluationsByAssessmentId.TryGetValue(assessmentId, out var evaluations) && evaluations.Length > 0)
+            .Select(assessmentId =>
+            {
+                var evaluations = evaluationsByAssessmentId[assessmentId];
+                return CalculateAssessmentResult(assessmentId, evaluations, competenceCriteriaMap);
+            })
+            .Where(assessmentResult => assessmentResult is not null)
+            .Cast<AssessmentResult>()
+            .ToList();
 
         // Сохраняем все результаты
         if (resultsToCreate.Count > 0)

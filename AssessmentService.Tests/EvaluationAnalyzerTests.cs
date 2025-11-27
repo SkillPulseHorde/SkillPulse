@@ -987,4 +987,666 @@ public class EvaluationAnalyzerTests
         Assert.Single(competence2CriterionSummary.Comments);
         Assert.Contains("Solid performance", competence2CriterionSummary.Comments);
     }
+
+    #region CreateAssessmentResultsAsync
+
+    [Fact]
+    public async Task CreateAssessmentResultsAsync_ShouldReturnEmptyList_WhenAssessmentIdsListIsEmpty()
+    {
+        // Arrange
+        var emptyList = new List<Guid>();
+
+        // Act
+        var result = await _analyzer.CreateAssessmentResultsAsync(emptyList);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Empty(result);
+        _evaluationRepositoryMock.Verify(
+            x => x.GetEvaluationsByAssessmentIdsReadonlyAsync(It.IsAny<List<Guid>>(), CancellationToken.None),
+            Times.Never);
+        _assessmentResultRepositoryMock.Verify(
+            x => x.CreateRangeAsync(It.IsAny<List<AssessmentResult>>(), CancellationToken.None),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task CreateAssessmentResultsAsync_ShouldReturnEmptyList_WhenNoEvaluationsExistForAnyAssessment()
+    {
+        // Arrange
+        var assessmentIds = new List<Guid> { Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid() };
+
+        _evaluationRepositoryMock
+            .Setup(x => x.GetEvaluationsByAssessmentIdsReadonlyAsync(assessmentIds, CancellationToken.None))
+            .ReturnsAsync(new Dictionary<Guid, Evaluation[]>());
+
+        _competenceRepositoryMock
+            .Setup(x => x.GetCompetenceCriteriaMapAsync(CancellationToken.None))
+            .ReturnsAsync(new Dictionary<Guid, List<Guid>>());
+
+        // Act
+        var result = await _analyzer.CreateAssessmentResultsAsync(assessmentIds);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Empty(result);
+        _assessmentResultRepositoryMock.Verify(
+            x => x.CreateRangeAsync(It.IsAny<List<AssessmentResult>>(), CancellationToken.None),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task CreateAssessmentResultsAsync_ShouldSkipAssessmentsWithNoEvaluations()
+    {
+        // Arrange
+        var assessment1Id = Guid.NewGuid();
+        var assessment2Id = Guid.NewGuid();
+        var assessment3Id = Guid.NewGuid();
+        var assessmentIds = new List<Guid> { assessment1Id, assessment2Id, assessment3Id };
+
+        var competenceId = Guid.NewGuid();
+        var criterionId = Guid.NewGuid();
+
+        // Только для assessment1Id есть оценки
+        var evaluation = new Evaluation
+        {
+            Id = Guid.NewGuid(),
+            EvaluatorId = Guid.NewGuid(),
+            RoleRatio = 1,
+            AssessmentId = assessment1Id,
+            CompetenceEvaluations = new List<CompetenceEvaluation>
+            {
+                new()
+                {
+                    Id = Guid.NewGuid(),
+                    CompetenceId = competenceId,
+                    EvaluationId = Guid.NewGuid(),
+                    Comment = "Good work",
+                    CriterionEvaluations = new List<CriterionEvaluation>
+                    {
+                        new()
+                        {
+                            Id = Guid.NewGuid(),
+                            CriterionId = criterionId,
+                            CompetenceEvaluationId = Guid.NewGuid(),
+                            Score = 8,
+                            Comment = "Excellent"
+                        }
+                    }
+                }
+            }
+        };
+
+        var evaluationsByAssessmentId = new Dictionary<Guid, Evaluation[]>
+        {
+            { assessment1Id, [evaluation] },
+            { assessment2Id, [] }, // Нет оценок
+            { assessment3Id, [] } // Нет оценок
+        };
+
+        _evaluationRepositoryMock
+            .Setup(x => x.GetEvaluationsByAssessmentIdsReadonlyAsync(assessmentIds, CancellationToken.None))
+            .ReturnsAsync(evaluationsByAssessmentId);
+
+        _competenceRepositoryMock
+            .Setup(x => x.GetCompetenceCriteriaMapAsync(CancellationToken.None))
+            .ReturnsAsync(new Dictionary<Guid, List<Guid>>
+            {
+                { competenceId, [criterionId] }
+            });
+
+        _assessmentResultRepositoryMock
+            .Setup(x => x.CreateRangeAsync(It.IsAny<List<AssessmentResult>>(), CancellationToken.None))
+            .Returns(Task.CompletedTask);
+
+        // Act
+        var result = await _analyzer.CreateAssessmentResultsAsync(assessmentIds);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Single(result);
+        Assert.Equal(assessment1Id, result[0].AssessmentId);
+        _assessmentResultRepositoryMock.Verify(
+            x => x.CreateRangeAsync(
+                It.Is<List<AssessmentResult>>(list => list.Count == 1 && list[0].AssessmentId == assessment1Id),
+                CancellationToken.None),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task CreateAssessmentResultsAsync_ShouldCreateMultipleResults_WhenAllAssessmentsHaveEvaluations()
+    {
+        // Arrange
+        var assessment1Id = Guid.NewGuid();
+        var assessment2Id = Guid.NewGuid();
+        var assessmentIds = new List<Guid> { assessment1Id, assessment2Id };
+
+        var competenceId = Guid.NewGuid();
+        var criterionId = Guid.NewGuid();
+
+        var evaluation1 = new Evaluation
+        {
+            Id = Guid.NewGuid(),
+            EvaluatorId = Guid.NewGuid(),
+            RoleRatio = 1,
+            AssessmentId = assessment1Id,
+            CompetenceEvaluations = new List<CompetenceEvaluation>
+            {
+                new()
+                {
+                    Id = Guid.NewGuid(),
+                    CompetenceId = competenceId,
+                    EvaluationId = Guid.NewGuid(),
+                    Comment = "Assessment 1 feedback",
+                    CriterionEvaluations = new List<CriterionEvaluation>
+                    {
+                        new()
+                        {
+                            Id = Guid.NewGuid(),
+                            CriterionId = criterionId,
+                            CompetenceEvaluationId = Guid.NewGuid(),
+                            Score = 7,
+                            Comment = "Good"
+                        }
+                    }
+                }
+            }
+        };
+
+        var evaluation2 = new Evaluation
+        {
+            Id = Guid.NewGuid(),
+            EvaluatorId = Guid.NewGuid(),
+            RoleRatio = 1,
+            AssessmentId = assessment2Id,
+            CompetenceEvaluations = new List<CompetenceEvaluation>
+            {
+                new()
+                {
+                    Id = Guid.NewGuid(),
+                    CompetenceId = competenceId,
+                    EvaluationId = Guid.NewGuid(),
+                    Comment = "Assessment 2 feedback",
+                    CriterionEvaluations = new List<CriterionEvaluation>
+                    {
+                        new()
+                        {
+                            Id = Guid.NewGuid(),
+                            CriterionId = criterionId,
+                            CompetenceEvaluationId = Guid.NewGuid(),
+                            Score = 9,
+                            Comment = "Excellent"
+                        }
+                    }
+                }
+            }
+        };
+
+        var evaluationsByAssessmentId = new Dictionary<Guid, Evaluation[]>
+        {
+            { assessment1Id, [evaluation1] },
+            { assessment2Id, [evaluation2] }
+        };
+
+        _evaluationRepositoryMock
+            .Setup(x => x.GetEvaluationsByAssessmentIdsReadonlyAsync(assessmentIds, CancellationToken.None))
+            .ReturnsAsync(evaluationsByAssessmentId);
+
+        _competenceRepositoryMock
+            .Setup(x => x.GetCompetenceCriteriaMapAsync(CancellationToken.None))
+            .ReturnsAsync(new Dictionary<Guid, List<Guid>>
+            {
+                { competenceId, [criterionId] }
+            });
+
+        _assessmentResultRepositoryMock
+            .Setup(x => x.CreateRangeAsync(It.IsAny<List<AssessmentResult>>(), CancellationToken.None))
+            .Returns(Task.CompletedTask);
+
+        // Act
+        var result = await _analyzer.CreateAssessmentResultsAsync(assessmentIds);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(2, result.Count);
+
+        var result1 = result.FirstOrDefault(r => r.AssessmentId == assessment1Id);
+        Assert.NotNull(result1);
+        Assert.Single(result1.Data.CompetenceSummaries);
+        Assert.Equal(7.0, result1.Data.CompetenceSummaries[competenceId]!.AverageScore);
+
+        var result2 = result.FirstOrDefault(r => r.AssessmentId == assessment2Id);
+        Assert.NotNull(result2);
+        Assert.Single(result2.Data.CompetenceSummaries);
+        Assert.Equal(9.0, result2.Data.CompetenceSummaries[competenceId]!.AverageScore);
+
+        _assessmentResultRepositoryMock.Verify(
+            x => x.CreateRangeAsync(
+                It.Is<List<AssessmentResult>>(list => list.Count == 2),
+                CancellationToken.None),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task CreateAssessmentResultsAsync_ShouldCalculateCorrectWeightedAverages_ForMultipleAssessments()
+    {
+        // Arrange
+        var assessment1Id = Guid.NewGuid();
+        var assessment2Id = Guid.NewGuid();
+        var assessmentIds = new List<Guid> { assessment1Id, assessment2Id };
+
+        var competenceId = Guid.NewGuid();
+        var criterion1Id = Guid.NewGuid();
+        var criterion2Id = Guid.NewGuid();
+
+        // Assessment 1: два оценщика с разными коэффициентами
+        var manager1Evaluation = new Evaluation
+        {
+            Id = Guid.NewGuid(),
+            EvaluatorId = Guid.NewGuid(),
+            RoleRatio = 2,
+            AssessmentId = assessment1Id,
+            CompetenceEvaluations = new List<CompetenceEvaluation>
+            {
+                new()
+                {
+                    Id = Guid.NewGuid(),
+                    CompetenceId = competenceId,
+                    EvaluationId = Guid.NewGuid(),
+                    Comment = "Manager feedback",
+                    CriterionEvaluations = new List<CriterionEvaluation>
+                    {
+                        new()
+                        {
+                            Id = Guid.NewGuid(),
+                            CriterionId = criterion1Id,
+                            CompetenceEvaluationId = Guid.NewGuid(),
+                            Score = 9,
+                            Comment = "Excellent"
+                        },
+                        new()
+                        {
+                            Id = Guid.NewGuid(),
+                            CriterionId = criterion2Id,
+                            CompetenceEvaluationId = Guid.NewGuid(),
+                            Score = 7,
+                            Comment = "Good"
+                        }
+                    }
+                }
+            }
+        };
+
+        var colleague1Evaluation = new Evaluation
+        {
+            Id = Guid.NewGuid(),
+            EvaluatorId = Guid.NewGuid(),
+            RoleRatio = 1,
+            AssessmentId = assessment1Id,
+            CompetenceEvaluations = new List<CompetenceEvaluation>
+            {
+                new()
+                {
+                    Id = Guid.NewGuid(),
+                    CompetenceId = competenceId,
+                    EvaluationId = Guid.NewGuid(),
+                    Comment = "Colleague feedback",
+                    CriterionEvaluations = new List<CriterionEvaluation>
+                    {
+                        new()
+                        {
+                            Id = Guid.NewGuid(),
+                            CriterionId = criterion1Id,
+                            CompetenceEvaluationId = Guid.NewGuid(),
+                            Score = 6,
+                            Comment = "Solid"
+                        },
+                        new()
+                        {
+                            Id = Guid.NewGuid(),
+                            CriterionId = criterion2Id,
+                            CompetenceEvaluationId = Guid.NewGuid(),
+                            Score = 5,
+                            Comment = "Needs improvement"
+                        }
+                    }
+                }
+            }
+        };
+
+        // Assessment 2: один оценщик
+        var manager2Evaluation = new Evaluation
+        {
+            Id = Guid.NewGuid(),
+            EvaluatorId = Guid.NewGuid(),
+            RoleRatio = 1,
+            AssessmentId = assessment2Id,
+            CompetenceEvaluations = new List<CompetenceEvaluation>
+            {
+                new()
+                {
+                    Id = Guid.NewGuid(),
+                    CompetenceId = competenceId,
+                    EvaluationId = Guid.NewGuid(),
+                    Comment = "Single evaluator",
+                    CriterionEvaluations = new List<CriterionEvaluation>
+                    {
+                        new()
+                        {
+                            Id = Guid.NewGuid(),
+                            CriterionId = criterion1Id,
+                            CompetenceEvaluationId = Guid.NewGuid(),
+                            Score = 8,
+                            Comment = "Very good"
+                        },
+                        new()
+                        {
+                            Id = Guid.NewGuid(),
+                            CriterionId = criterion2Id,
+                            CompetenceEvaluationId = Guid.NewGuid(),
+                            Score = 6,
+                            Comment = "Acceptable"
+                        }
+                    }
+                }
+            }
+        };
+
+        var evaluationsByAssessmentId = new Dictionary<Guid, Evaluation[]>
+        {
+            { assessment1Id, [manager1Evaluation, colleague1Evaluation] },
+            { assessment2Id, [manager2Evaluation] }
+        };
+
+        _evaluationRepositoryMock
+            .Setup(x => x.GetEvaluationsByAssessmentIdsReadonlyAsync(assessmentIds, CancellationToken.None))
+            .ReturnsAsync(evaluationsByAssessmentId);
+
+        _competenceRepositoryMock
+            .Setup(x => x.GetCompetenceCriteriaMapAsync(CancellationToken.None))
+            .ReturnsAsync(new Dictionary<Guid, List<Guid>>
+            {
+                { competenceId, [criterion1Id, criterion2Id] }
+            });
+
+        _assessmentResultRepositoryMock
+            .Setup(x => x.CreateRangeAsync(It.IsAny<List<AssessmentResult>>(), CancellationToken.None))
+            .Returns(Task.CompletedTask);
+
+        // Expected values for Assessment 1
+        var assessment1Criterion1Expected = Math.Round((9.0 * 2 + 6.0 * 1) / (2.0 + 1.0), 2); // 8.0
+        var assessment1Criterion2Expected = Math.Round((7.0 * 2 + 5.0 * 1) / (2.0 + 1.0), 2); // 6.33
+        var assessment1Expected = Math.Round((assessment1Criterion1Expected + assessment1Criterion2Expected) / 2.0, 2);
+
+        // Expected values for Assessment 2
+        var assessment2Criterion1Expected = 8.0;
+        var assessment2Criterion2Expected = 6.0;
+        var assessment2Expected = Math.Round((assessment2Criterion1Expected + assessment2Criterion2Expected) / 2.0, 2);
+
+        // Act
+        var result = await _analyzer.CreateAssessmentResultsAsync(assessmentIds);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(2, result.Count);
+
+        // Проверяем Assessment 1
+        var result1 = result.FirstOrDefault(r => r.AssessmentId == assessment1Id);
+        Assert.NotNull(result1);
+        var competence1Summary = result1.Data.CompetenceSummaries[competenceId];
+        Assert.NotNull(competence1Summary);
+        Assert.Equal(assessment1Expected, competence1Summary.AverageScore, precision: 10);
+        Assert.Equal(2, competence1Summary.Comments.Count);
+
+        // Проверяем Assessment 2
+        var result2 = result.FirstOrDefault(r => r.AssessmentId == assessment2Id);
+        Assert.NotNull(result2);
+        var competence2Summary = result2.Data.CompetenceSummaries[competenceId];
+        Assert.NotNull(competence2Summary);
+        Assert.Equal(assessment2Expected, competence2Summary.AverageScore, precision: 10);
+        Assert.Single(competence2Summary.Comments);
+    }
+
+    [Fact]
+    public async Task CreateAssessmentResultsAsync_ShouldNotCallCreateRange_WhenAllResultsAreNull()
+    {
+        // Arrange
+        var assessment1Id = Guid.NewGuid();
+        var assessment2Id = Guid.NewGuid();
+        var assessmentIds = new List<Guid> { assessment1Id, assessment2Id };
+
+        // Оценки есть, но нет оценок по критериям (все Score = null)
+        var evaluation1 = new Evaluation
+        {
+            Id = Guid.NewGuid(),
+            EvaluatorId = Guid.NewGuid(),
+            RoleRatio = 1,
+            AssessmentId = assessment1Id,
+            CompetenceEvaluations = new List<CompetenceEvaluation>
+            {
+                new()
+                {
+                    Id = Guid.NewGuid(),
+                    CompetenceId = Guid.NewGuid(),
+                    EvaluationId = Guid.NewGuid(),
+                    Comment = "Comment",
+                    CriterionEvaluations = new List<CriterionEvaluation>
+                    {
+                        new()
+                        {
+                            Id = Guid.NewGuid(),
+                            CriterionId = Guid.NewGuid(),
+                            CompetenceEvaluationId = Guid.NewGuid(),
+                            Score = null, // Нет оценки
+                            Comment = null
+                        }
+                    }
+                }
+            }
+        };
+
+        var evaluation2 = new Evaluation
+        {
+            Id = Guid.NewGuid(),
+            EvaluatorId = Guid.NewGuid(),
+            RoleRatio = 1,
+            AssessmentId = assessment2Id,
+            CompetenceEvaluations = new List<CompetenceEvaluation>
+            {
+                new()
+                {
+                    Id = Guid.NewGuid(),
+                    CompetenceId = Guid.NewGuid(),
+                    EvaluationId = Guid.NewGuid(),
+                    Comment = "Comment",
+                    CriterionEvaluations = new List<CriterionEvaluation>
+                    {
+                        new()
+                        {
+                            Id = Guid.NewGuid(),
+                            CriterionId = Guid.NewGuid(),
+                            CompetenceEvaluationId = Guid.NewGuid(),
+                            Score = null, // Нет оценки
+                            Comment = null
+                        }
+                    }
+                }
+            }
+        };
+
+        var evaluationsByAssessmentId = new Dictionary<Guid, Evaluation[]>
+        {
+            { assessment1Id, [evaluation1] },
+            { assessment2Id, [evaluation2] }
+        };
+
+        _evaluationRepositoryMock
+            .Setup(x => x.GetEvaluationsByAssessmentIdsReadonlyAsync(assessmentIds, CancellationToken.None))
+            .ReturnsAsync(evaluationsByAssessmentId);
+
+        _competenceRepositoryMock
+            .Setup(x => x.GetCompetenceCriteriaMapAsync(CancellationToken.None))
+            .ReturnsAsync(new Dictionary<Guid, List<Guid>>());
+
+        // Act
+        var result = await _analyzer.CreateAssessmentResultsAsync(assessmentIds);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Empty(result);
+        _assessmentResultRepositoryMock.Verify(
+            x => x.CreateRangeAsync(It.IsAny<List<AssessmentResult>>(), CancellationToken.None),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task CreateAssessmentResultsAsync_ShouldHandleMixedScenario_WithPartialResults()
+    {
+        // Arrange
+        var assessment1Id = Guid.NewGuid(); // Есть валидная оценка
+        var assessment2Id = Guid.NewGuid(); // Нет оценок
+        var assessment3Id = Guid.NewGuid(); // Оценка есть, но все Score = null
+        var assessment4Id = Guid.NewGuid(); // Есть валидная оценка
+        var assessmentIds = new List<Guid> { assessment1Id, assessment2Id, assessment3Id, assessment4Id };
+
+        var competenceId = Guid.NewGuid();
+        var criterionId = Guid.NewGuid();
+
+        var evaluation1 = new Evaluation
+        {
+            Id = Guid.NewGuid(),
+            EvaluatorId = Guid.NewGuid(),
+            RoleRatio = 1,
+            AssessmentId = assessment1Id,
+            CompetenceEvaluations = new List<CompetenceEvaluation>
+            {
+                new()
+                {
+                    Id = Guid.NewGuid(),
+                    CompetenceId = competenceId,
+                    EvaluationId = Guid.NewGuid(),
+                    Comment = "Valid assessment 1",
+                    CriterionEvaluations = new List<CriterionEvaluation>
+                    {
+                        new()
+                        {
+                            Id = Guid.NewGuid(),
+                            CriterionId = criterionId,
+                            CompetenceEvaluationId = Guid.NewGuid(),
+                            Score = 7,
+                            Comment = "Good"
+                        }
+                    }
+                }
+            }
+        };
+
+        var evaluation3 = new Evaluation
+        {
+            Id = Guid.NewGuid(),
+            EvaluatorId = Guid.NewGuid(),
+            RoleRatio = 1,
+            AssessmentId = assessment3Id,
+            CompetenceEvaluations = new List<CompetenceEvaluation>
+            {
+                new()
+                {
+                    Id = Guid.NewGuid(),
+                    CompetenceId = competenceId,
+                    EvaluationId = Guid.NewGuid(),
+                    Comment = "Invalid assessment 3",
+                    CriterionEvaluations = new List<CriterionEvaluation>
+                    {
+                        new()
+                        {
+                            Id = Guid.NewGuid(),
+                            CriterionId = criterionId,
+                            CompetenceEvaluationId = Guid.NewGuid(),
+                            Score = null, // Нет оценки
+                            Comment = null
+                        }
+                    }
+                }
+            }
+        };
+
+        var evaluation4 = new Evaluation
+        {
+            Id = Guid.NewGuid(),
+            EvaluatorId = Guid.NewGuid(),
+            RoleRatio = 1,
+            AssessmentId = assessment4Id,
+            CompetenceEvaluations = new List<CompetenceEvaluation>
+            {
+                new()
+                {
+                    Id = Guid.NewGuid(),
+                    CompetenceId = competenceId,
+                    EvaluationId = Guid.NewGuid(),
+                    Comment = "Valid assessment 4",
+                    CriterionEvaluations = new List<CriterionEvaluation>
+                    {
+                        new()
+                        {
+                            Id = Guid.NewGuid(),
+                            CriterionId = criterionId,
+                            CompetenceEvaluationId = Guid.NewGuid(),
+                            Score = 9,
+                            Comment = "Excellent"
+                        }
+                    }
+                }
+            }
+        };
+
+        var evaluationsByAssessmentId = new Dictionary<Guid, Evaluation[]>
+        {
+            { assessment1Id, [evaluation1] },
+            // assessment2Id отсутствует - нет оценок
+            { assessment3Id, [evaluation3] },
+            { assessment4Id, [evaluation4] }
+        };
+
+        _evaluationRepositoryMock
+            .Setup(x => x.GetEvaluationsByAssessmentIdsReadonlyAsync(assessmentIds, CancellationToken.None))
+            .ReturnsAsync(evaluationsByAssessmentId);
+
+        _competenceRepositoryMock
+            .Setup(x => x.GetCompetenceCriteriaMapAsync(CancellationToken.None))
+            .ReturnsAsync(new Dictionary<Guid, List<Guid>>
+            {
+                { competenceId, [criterionId] }
+            });
+
+        _assessmentResultRepositoryMock
+            .Setup(x => x.CreateRangeAsync(It.IsAny<List<AssessmentResult>>(), CancellationToken.None))
+            .Returns(Task.CompletedTask);
+
+        // Act
+        var result = await _analyzer.CreateAssessmentResultsAsync(assessmentIds);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(2, result.Count); // Только assessment1Id и assessment4Id должны быть в результате
+
+        var result1 = result.FirstOrDefault(r => r.AssessmentId == assessment1Id);
+        Assert.NotNull(result1);
+        Assert.Equal(7.0, result1.Data.CompetenceSummaries[competenceId]!.AverageScore);
+
+        var result4 = result.FirstOrDefault(r => r.AssessmentId == assessment4Id);
+        Assert.NotNull(result4);
+        Assert.Equal(9.0, result4.Data.CompetenceSummaries[competenceId]!.AverageScore);
+
+        // assessment2Id и assessment3Id не должны быть в результате
+        Assert.DoesNotContain(result, r => r.AssessmentId == assessment2Id);
+        Assert.DoesNotContain(result, r => r.AssessmentId == assessment3Id);
+
+        _assessmentResultRepositoryMock.Verify(
+            x => x.CreateRangeAsync(
+                It.Is<List<AssessmentResult>>(list => list.Count == 2),
+                CancellationToken.None),
+            Times.Once);
+    }
+
+    #endregion
 }
