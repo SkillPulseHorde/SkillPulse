@@ -17,6 +17,34 @@ public sealed class EvaluationAnalyzer(
                await CreateAndGetAssessmentResultAsync(assessmentId, ct);
     }
     
+    public async Task<List<AssessmentResult>> CreateAssessmentResultsAsync(List<Guid> assessmentIds, CancellationToken ct = default)
+    {
+        if (assessmentIds.Count == 0)
+            return [];
+
+        // Получаем все оценки для всех assessmentId
+        var evaluationsByAssessmentId = await evaluationRepository.GetEvaluationsByAssessmentIdsReadonlyAsync(assessmentIds, ct);
+        
+        var competenceCriteriaMap = await competenceRepository.GetCompetenceCriteriaMapAsync(ct);
+        
+        var resultsToCreate = assessmentIds
+            .Where(assessmentId => evaluationsByAssessmentId.TryGetValue(assessmentId, out var evaluations) && evaluations.Length > 0)
+            .Select(assessmentId =>
+            {
+                var evaluations = evaluationsByAssessmentId[assessmentId];
+                return CalculateAssessmentResult(assessmentId, evaluations, competenceCriteriaMap);
+            })
+            .Where(assessmentResult => assessmentResult is not null)
+            .Cast<AssessmentResult>()
+            .ToList();
+
+        // Сохраняем все результаты
+        if (resultsToCreate.Count > 0)
+            await assessmentResultRepository.CreateRangeAsync(resultsToCreate, ct);
+
+        return resultsToCreate;
+    }
+    
     private async Task<AssessmentResult?> CreateAndGetAssessmentResultAsync(Guid assessmentId, CancellationToken ct = default)
     {
         var evaluations = await evaluationRepository.GetEvaluationsByAssessmentIdReadonlyAsync(assessmentId, ct);
@@ -25,6 +53,19 @@ public sealed class EvaluationAnalyzer(
         
         var competenceCriteriaMap = await competenceRepository.GetCompetenceCriteriaMapAsync(ct);
         
+        var assessmentResult = CalculateAssessmentResult(assessmentId, evaluations, competenceCriteriaMap);
+        
+        if (assessmentResult is not null)
+            await assessmentResultRepository.CreateAsync(assessmentResult, ct);
+        
+        return assessmentResult;
+    }
+
+    private AssessmentResult? CalculateAssessmentResult(
+        Guid assessmentId, 
+        Evaluation[] evaluations, 
+        Dictionary<Guid, List<Guid>> competenceCriteriaMap)
+    {
         var competenceSummaries = competenceCriteriaMap.Keys.ToDictionary(
             competenceId => competenceId,
             competenceId =>
@@ -110,14 +151,10 @@ public sealed class EvaluationAnalyzer(
         if (competenceSummaries.Values.All(cs => cs is null))
             return null;
         
-        var assessmentResult = new AssessmentResult
+        return new AssessmentResult
         {
             AssessmentId = assessmentId,
             Data = new AssessmentResultData(competenceSummaries)
         };
-        
-        await assessmentResultRepository.CreateAsync(assessmentResult, ct);
-        
-        return assessmentResult;
     }
 }

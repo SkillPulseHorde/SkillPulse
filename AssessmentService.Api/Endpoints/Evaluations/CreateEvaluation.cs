@@ -11,7 +11,7 @@ public static class CreateEvaluation
 {
     public static IEndpointRouteBuilder MapCreateEvaluationEndpoint(this IEndpointRouteBuilder app)
     {
-        app.MapPost("/api/evaluations", async (
+        app.MapPost("/api/assessments/evaluations", async (
                 HttpContext httpContext,
                 [FromBody] CreateEvaluationRequestDto request,
                 IMediator mediator,

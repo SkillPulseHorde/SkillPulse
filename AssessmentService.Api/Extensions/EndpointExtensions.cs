@@ -39,6 +39,7 @@ public static class EndpointExtensions
     private static IEndpointRouteBuilder MapAssessmentResultEndpoints(this IEndpointRouteBuilder app)
     {
         app.MapGetAssessmentResultEndpoint();
+        app.MapGetAllCompetenceResultsEndpoint();
 
         return app;
     }
