@@ -7,7 +7,7 @@ builder.Services.AddCors(option  =>
 {
     option.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:4200", "null")
+        policy.WithOrigins("http://localhost:4200", "https://localhost:4200", "null") // TODO: Не забыть убрать null, он для проверки
             .AllowCredentials()
             .AllowAnyHeader()
             .AllowAnyMethod();
@@ -23,6 +23,7 @@ app.UseSwaggerUI(c =>
     c.SwaggerEndpoint("/swagger/userservice/swagger.json", "UserService");
     c.SwaggerEndpoint("/swagger/assessmentservice/swagger.json", "AssessmentService");
     c.SwaggerEndpoint("/swagger/authservice/swagger.json", "AuthService");
+    c.SwaggerEndpoint("/swagger/recommendationservice/swagger.json", "RecommendationService");
 });
 
 

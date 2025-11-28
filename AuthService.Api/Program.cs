@@ -55,9 +55,10 @@ app.MapPost("/api/auth/login", async ([FromBody] LoginRequest request, HttpConte
     httpContext.Response.Cookies.Append("refreshToken", loginResponseModel.TokenResponse.RefreshToken, new CookieOptions
     {
         HttpOnly = true,
-        Secure = true,
+        Secure = httpContext.Request.IsHttps, //TODO настроить в конфиге
         SameSite = SameSiteMode.Strict,
-        Expires = DateTimeOffset.UtcNow.AddHours(int.Parse(builder.Configuration["JWT_REFRESH_EXPIRES_HOURS"]!)),
+        Expires = DateTimeOffset.UtcNow.AddHours(
+            int.Parse(builder.Configuration["JWT_REFRESH_EXPIRES_HOURS"]!)),
         Path = "/api/auth"
     });
     
@@ -98,7 +99,7 @@ app.MapPost("/api/auth/refresh", async (HttpContext httpContext, IMediator media
     httpContext.Response.Cookies.Append("refreshToken", tokens.RefreshToken, new CookieOptions
     {
         HttpOnly = true,
-        Secure = true,
+        Secure = httpContext.Request.IsHttps, //TODO настроить в конфиге
         SameSite = SameSiteMode.Strict,
         Expires = DateTimeOffset.UtcNow.AddHours(int.Parse(builder.Configuration["JWT_REFRESH_EXPIRES_HOURS"]!)),
         Path = "/api/auth"
