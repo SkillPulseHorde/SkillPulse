@@ -96,4 +96,16 @@ public class AssessmentRepository : IAssessmentRepository
             .ThenByDescending(a => a.StartAt)
             .ToListAsync(ct);
     }
+    
+    /// <summary>
+    /// // Есть ли уже аттестация для данного пользователя за данный период
+    /// </summary>
+    public async Task<bool> HasOverlappingAssessmentAsync(Guid evaluateeId, DateTime startAt, DateTime endsAt, CancellationToken ct = default)
+    {
+        return await _dbContext.Assessments
+            .AsNoTracking()
+            .AnyAsync(a => a.EvaluateeId == evaluateeId 
+                           && a.StartAt < endsAt 
+                           && a.EndsAt > startAt, ct);
+    }
 }
