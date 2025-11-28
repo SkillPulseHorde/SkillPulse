@@ -21,4 +21,10 @@ public interface IAssessmentRepository
 
     Task<List<Assessment>> GetCompletedAssessmentsByEvaluateeIdReadonlyAsync(Guid evaluateeId,
         CancellationToken ct = default);
+
+    /// <summary>
+    /// // Есть ли уже аттестация для данного пользователя за данный период
+    /// </summary>
+    Task<bool> HasOverlappingAssessmentAsync(Guid evaluateeId, DateTime startAt, DateTime endsAt, 
+        CancellationToken ct = default);
 }

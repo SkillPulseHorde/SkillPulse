@@ -37,6 +37,15 @@ public sealed class CreateAssessmentCommandHandler(
         if (!areUsersExist)
             return Error.NotFound("Заданные пользователи не существуют");
         
+        
+        var hasOverlapping = await assessmentRepository.HasOverlappingAssessmentAsync(
+            request.EvaluateeId, 
+            request.StartAt, 
+            request.EndsAt, 
+            ct);
+        
+        if (hasOverlapping)
+            return Error.Conflict("В заданном периоде уже существует аттестация для этого пользователя");
 
         var assessment = new Assessment
         {
