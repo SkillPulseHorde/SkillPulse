@@ -7,7 +7,8 @@ public class RecommendationDbContext : DbContext
 {
     public DbSet<IndividualDevelopmentPlan> IndividualDevelopmentPlans => Set<IndividualDevelopmentPlan>();
     public DbSet<LearningMaterial> LearningMaterials => Set<LearningMaterial>();
-    
+    public DbSet<ThresholdValue> ThresholdValues => Set<ThresholdValue>();
+
     public RecommendationDbContext(DbContextOptions<RecommendationDbContext> options) : base(options)
     {
     }

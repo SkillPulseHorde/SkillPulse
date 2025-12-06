@@ -16,10 +16,14 @@ var app = builder.Build();
 app.UseSwagger();
 app.UseSwaggerUI();
 
+var internalToken = app.Configuration["Services:UserService:InternalToken"];
+app.UseMiddleware<ServiceAuthenticationMiddleware>(internalToken);
+
+app.UseAuthentication();
+
 if (app.Environment.IsDevelopment())
     app.UseMiddleware<DevelopmentAuthenticationMiddleware>();
 
-app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapAllEndpoints();

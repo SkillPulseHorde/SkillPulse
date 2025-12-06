@@ -23,8 +23,8 @@ public static class InfrastructureExtensions
         services.AddScoped<ICompetenceRepository, CompetenceRepository>();
         services.AddScoped<IUserEvaluatorRepository, UserEvaluatorRepository>();
         services.AddScoped<IAssessmentResultRepository, AssessmentResultRepository>();
-        
-        
+
+
         // Клиенты
         services.Configure<UserServiceOptions>(configuration);
         services.AddUserServiceClient(configuration);

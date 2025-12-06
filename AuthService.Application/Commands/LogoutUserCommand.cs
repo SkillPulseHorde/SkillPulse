@@ -10,7 +10,7 @@ public sealed record LogoutUserCommand(Guid UserId) : IRequest<Result>;
 public sealed class LogoutUserCommandHandler : IRequestHandler<LogoutUserCommand, Result>
 {
     private readonly IAuthRepository _authRepository;
-    
+
     public LogoutUserCommandHandler(IAuthRepository authRepository)
     {
         _authRepository = authRepository;
@@ -21,11 +21,11 @@ public sealed class LogoutUserCommandHandler : IRequestHandler<LogoutUserCommand
         var user = await _authRepository.GetUserByIdReadOnlyAsync(request.UserId, cancellationToken);
         if (user == null)
             return Result<string>.Failure(Error.NotFound("Пользователь не найден"));
-        
+
         user.ClearRefreshToken();
-        
+
         await _authRepository.UpdateRefreshTokenUserAsync(user, cancellationToken);
-        
+
         return Result.Success();
     }
 }

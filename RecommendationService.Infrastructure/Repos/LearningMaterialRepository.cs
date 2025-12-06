@@ -14,23 +14,25 @@ public class LearningMaterialRepository : ILearningMaterialRepository
         _context = context;
     }
 
-    public async Task<List<LearningMaterial>> GetByCompetenceAsync(string competence, CancellationToken ct = default)
-    {
-        return await _context.LearningMaterials
-            .Where(m => m.Competence == competence)
-            .ToListAsync(ct);
-    }
-
-    public async Task<Dictionary<string, List<LearningMaterial>>> GetByCompetencesAsync(List<string> competences,
+    public async Task<List<LearningMaterial>?> GetByCompetenceAsync(string competence,
+        List<string> tags,
         CancellationToken ct = default)
     {
-        var materials = await _context.LearningMaterials
-            .Where(m => competences.Contains(m.Competence))
+        if (tags.Count == 0)
+            return null;
+
+        var cutoff = DateTime.UtcNow.AddMonths(-1);
+
+        var rowMaterials = await _context.LearningMaterials
+            .Where(m => competence == m.CompetenceName && m.Created <= cutoff && tags.Contains(m.Tag.ToString()))
+            .OrderByDescending(m => m.Created)
             .ToListAsync(ct);
-        
-        return materials
-            .GroupBy(m => m.Competence)
-            .ToDictionary(g => g.Key, g => g.ToList());
+
+        var materials = rowMaterials.GroupBy(m => m.Tag)
+            .Select(g => g.First())
+            .ToList();
+
+        return materials.Count == tags.Count ? materials : null;
     }
 
     public async Task AddRangeAsync(List<LearningMaterial> learningMaterials, CancellationToken ct = default)

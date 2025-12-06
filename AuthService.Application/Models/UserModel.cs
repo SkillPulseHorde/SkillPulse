@@ -1,12 +1,10 @@
 ﻿namespace AuthService.Application.Models;
 
-public record UserModel(
-    string FirstName,
-    string LastName,
-    string? MidName,
-    string? Email,
-    string? Grade,
-    string? TeamName,
-    string? ManagerName,
-    string Position
-);
+public sealed record UserModel
+{
+    public required Guid Id { get; init; }
+    public required string FullName { get; init; }
+    public required string Position { get; init; }
+    public string? TeamName { get; init; }
+    public required string Grade { get; init; }
+}

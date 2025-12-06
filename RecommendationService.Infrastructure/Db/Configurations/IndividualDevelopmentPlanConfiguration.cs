@@ -10,6 +10,6 @@ public class IndividualDevelopmentPlanConfiguration : IEntityTypeConfiguration<I
     {
         builder.ToTable("IndividualDevelopmentPlans");
 
-        builder.HasKey(x => new {x.AssessmentId});
+        builder.HasKey(x => x.AssessmentId);
     }
 }

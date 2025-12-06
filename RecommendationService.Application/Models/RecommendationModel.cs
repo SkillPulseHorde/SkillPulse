@@ -1,24 +1,36 @@
 ﻿namespace RecommendationService.Application.Models;
 
-public record RecommendationModel
+public sealed record RecommendationModel
 {
-    public Guid UserId { get; set; }
-    
-    public RecommendationCriteria[] RecommendationCriterion { get; set; } =  []; 
+    public List<IprCompetenceModel> RecommendationCompetences { get; set; } = [];
+
+    public static RecommendationModel Deserialize(string json)
+    {
+        return System.Text.Json.JsonSerializer.Deserialize<RecommendationModel>(json)
+               ?? new RecommendationModel();
+    }
+
+    public string Serialize()
+    {
+        return System.Text.Json.JsonSerializer.Serialize(this);
+    }
 }
 
-public record RecommendationCriteria
+public sealed record IprCompetenceModel
 {
-    public required string CriteriaName { get; set; } = string.Empty;
-    
-    public string CriteriaReason { get; set; } = string.Empty;
-    
-    public string WayToImproveCriteria { get; set; } = string.Empty;
+    public required string CompetenceName { get; set; } = string.Empty;
 
-    public LearningMaterial[] LearningMaterials { get; set; } = [];
+    public string CompetenceReason { get; set; } = string.Empty;
+
+    public string WayToImproveCompetence { get; set; } = string.Empty;
+
+    public List<LearningMaterialModel> LearningMaterials { get; set; } = [];
+
+    public bool IsEvaluated { get; set; } = true;
+
 }
 
-public record LearningMaterial
+public sealed record LearningMaterialModel
 {
     public string LearningMaterialName { get; set; } = string.Empty;
     

@@ -13,6 +13,6 @@ public class LearningMaterialConfiguration : IEntityTypeConfiguration<LearningMa
         builder.HasKey(x => x.Id);
 
         // Для поиска по конкретной компетенции
-        builder.HasIndex(x => new { x.Competence });
+        builder.HasIndex(x => x.CompetenceName);
     }
 }

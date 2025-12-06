@@ -34,16 +34,15 @@ public sealed class AuthenticateUserCommandHandler : IRequestHandler<Authenticat
     {
         var user = await _authRepository.GetUserByEmailReadOnlyAsync(request.Email, ct);
         if (user is null)
-            return Result<LoginResponseModel>.Failure(Error.NotFound("Не удалось войти в систему"));
+            return Error.NotFound("Не удалось войти в систему");
 
         var result = _passwordHasher.IsPasswordValid(request.Password, user.PasswordHash);
         if (!result)
-            return Result<LoginResponseModel>.Failure(Error.Unauthorized("Не удалось войти в систему"));
+            return Error.Unauthorized("Не удалось войти в систему");
 
         var userFromUserService = await _userServiceClient.GetUserByIdAsync(user.UserId, ct);
-
         if (userFromUserService is null)
-            return Result<LoginResponseModel>.Failure(Error.Unauthorized("Пользователь не найден в UserService"));
+            return Error.Unauthorized("Пользователь не найден в UserService");
 
         var accessToken = _jwtProvider.GenerateAccessToken(user, userFromUserService.Position);
         var refreshToken = _jwtProvider.GenerateRefreshToken();
@@ -55,19 +54,11 @@ public sealed class AuthenticateUserCommandHandler : IRequestHandler<Authenticat
 
         await _authRepository.UpdateRefreshTokenUserAsync(user, ct);
 
-        var tokens = new TokensModel
-        {
-            AccessToken = accessToken,
-            RefreshToken = refreshToken
-        };
+        var tokens = TokensModel.Create(accessToken, refreshToken);
 
-        var loginResponse = new LoginResponseModel
-        {
-            TokenResponse = tokens,
-            UserId = user.UserId
-        };
+        var loginResponse = LoginResponseModel.Create(user.UserId, tokens);
 
-        return Result<LoginResponseModel>.Success(loginResponse);
+        return loginResponse;
     }
 }
 
