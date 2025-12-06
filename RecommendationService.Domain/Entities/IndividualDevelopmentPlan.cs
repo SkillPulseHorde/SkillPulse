@@ -5,7 +5,7 @@
 /// </summary>
 public class IndividualDevelopmentPlan
 {
-    public Guid AssessmentId { get; set; } // Первичный ключ
-    
+    public required Guid AssessmentId { get; set; }
+
     public required string SummaryJson { get; set; }
 }

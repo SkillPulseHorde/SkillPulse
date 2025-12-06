@@ -43,9 +43,12 @@ namespace RecommendationService.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("Competence")
+                    b.Property<string>("CompetenceName")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("Created")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("Tag")
                         .HasColumnType("integer");
@@ -59,9 +62,79 @@ namespace RecommendationService.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Competence");
+                    b.HasIndex("CompetenceName");
 
                     b.ToTable("LearningMaterials", (string)null);
+                });
+
+            modelBuilder.Entity("RecommendationService.Domain.Entities.ThresholdValue", b =>
+                {
+                    b.Property<string>("Grade")
+                        .HasColumnType("text");
+
+                    b.Property<double>("MinAvgCompetence")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("MinAvgCriterion")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("MinCoreThreshold")
+                        .HasColumnType("double precision");
+
+                    b.HasKey("Grade");
+
+                    b.ToTable("ThresholdValues", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Grade = "J1",
+                            MinAvgCompetence = 5.0,
+                            MinAvgCriterion = 3.0,
+                            MinCoreThreshold = 5.0
+                        },
+                        new
+                        {
+                            Grade = "J2",
+                            MinAvgCompetence = 5.5,
+                            MinAvgCriterion = 4.0,
+                            MinCoreThreshold = 6.0
+                        },
+                        new
+                        {
+                            Grade = "J3",
+                            MinAvgCompetence = 6.0,
+                            MinAvgCriterion = 5.0,
+                            MinCoreThreshold = 6.0
+                        },
+                        new
+                        {
+                            Grade = "M1",
+                            MinAvgCompetence = 7.0,
+                            MinAvgCriterion = 6.0,
+                            MinCoreThreshold = 7.0
+                        },
+                        new
+                        {
+                            Grade = "M2",
+                            MinAvgCompetence = 7.5,
+                            MinAvgCriterion = 7.0,
+                            MinCoreThreshold = 7.0
+                        },
+                        new
+                        {
+                            Grade = "M3",
+                            MinAvgCompetence = 8.0,
+                            MinAvgCriterion = 7.0,
+                            MinCoreThreshold = 8.0
+                        },
+                        new
+                        {
+                            Grade = "S",
+                            MinAvgCompetence = 8.5,
+                            MinAvgCriterion = 8.0,
+                            MinCoreThreshold = 8.0
+                        });
                 });
 #pragma warning restore 612, 618
         }

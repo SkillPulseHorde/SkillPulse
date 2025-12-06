@@ -12,8 +12,10 @@ public class LearningMaterial
     public required string Title { get; set; }
     
     public string? Url  { get; set; }
-    
-    public required string Competence { get; set; }
+
+    public required string CompetenceName { get; set; }
     
     public LearningMaterialTag Tag { get; set; }
+
+    public DateTimeOffset Created { get; set; }
 }

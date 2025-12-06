@@ -21,11 +21,21 @@
       <ProjectReference Include="..\RecommendationService.Infrastructure\RecommendationService.Infrastructure.csproj" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="Endpoints\" />
-    </ItemGroup>
+    <!-- Копируем сертификат после сборки -->
+    <Target Name="CopyCertificate" AfterTargets="Build">
+        <PropertyGroup>
+            <SourceCert>$(MSBuildProjectDirectory)\..\RecommendationService.Infrastructure\AI\Certificates\russian_trusted_root_ca.cer</SourceCert>
+            <DestCert>$(OutputPath)AI\Certificates\</DestCert>
+        </PropertyGroup>
+
+        <MakeDir Directories="$(DestCert)" />
+        <Copy SourceFiles="$(SourceCert)" DestinationFolder="$(DestCert)" SkipUnchangedFiles="true" />
+
+        <Message Text="Сертификат скопирован!" Importance="high" />
+    </Target>
 
     <ItemGroup>
+      <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.9" />
       <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.9">
         <PrivateAssets>all</PrivateAssets>
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

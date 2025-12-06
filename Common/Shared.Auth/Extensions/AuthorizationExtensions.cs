@@ -24,7 +24,19 @@ public static class AuthorizationExtensions
 
             // Политика: любой авторизованный пользователь
             options.AddPolicy("Authenticated", policy =>
-                policy.RequireAuthenticatedUser());
+                policy.RequireAuthenticatedUser()
+                    .RequireAssertion(ctx => !ctx.User.HasClaim("auth_type", "service")));
+
+            // Политика: только сервис
+            options.AddPolicy("ServiceOnly", policy =>
+                policy.RequireRole("InternalService")
+                    .RequireClaim("auth_type", "service"));
+
+            // Политика: и сервис и любой пользователь
+            options.AddPolicy("AuthenticatedAndService", policy =>
+            {
+                policy.RequireAuthenticatedUser();
+            });
         });
 
         return services;

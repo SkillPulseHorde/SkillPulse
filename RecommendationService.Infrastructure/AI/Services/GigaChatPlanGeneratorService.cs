@@ -1,59 +1,52 @@
 ﻿using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
-using Common;
 using Microsoft.Extensions.Options;
 using Microsoft.SemanticKernel;
 using System.Security.Cryptography.X509Certificates;
-using System.Text.Json.Serialization;
-using Microsoft.Extensions.Logging;
+using System.Text.Json;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
-using RecommendationService.Application.AI;
+using RecommendationService.Application.AiServiceAbstract;
+using RecommendationService.Application.Models;
 using RecommendationService.Infrastructure.AI.Configuration;
+using RecommendationService.Infrastructure.Dto;
 
 namespace RecommendationService.Infrastructure.AI.Services;
 
-public class GigaChatPlanGeneratorService : IAiPlanGeneratorService
+public class GigaChatPlanGeneratorService : IAiIprGeneratorService
 {
     private const int Timeout = 30;
     private const string AuthUrl = "https://ngw.devices.sberbank.ru:9443/api/v2/oauth";
 
-    private readonly AiOptions _settings;
-    private readonly ILogger<OpenAiApiPlanGeneratorService> _logger;
+    private readonly IprAiOptions _settings;
 
     private string? _accessToken;
     private DateTime _tokenExpiration = DateTime.MinValue;
 
     public GigaChatPlanGeneratorService(
-        ILogger<OpenAiApiPlanGeneratorService> logger,
-        IOptions<AiOptions> settings)
+        IOptions<IprAiOptions> settings)
     {
         _settings = settings.Value;
-        _logger = logger;
     }
 
     /// <summary>
     /// Генерация запроса
     /// </summary>
-    public async Task<Result<string>> GeneratePlanAsync(string assessmentData, CancellationToken ct = default)
+    public async Task<RecommendationModel?> GenerateIprAsync(
+        List<CompetenceWithResultModel> model,
+        CancellationToken ct = default)
     {
-        _logger.LogInformation("Начало процесса работы с гегачатом");
         var accessToken = await GetAccessTokenAsync(ct);
-        _logger.LogInformation("Токен: " + accessToken);
-
         if (string.IsNullOrEmpty(accessToken))
-            return Result<string>.Failure(Error.NotFound("Не получен Аксес токен"));
-
-        var prompt = BuildPrompt(assessmentData);
-        _logger.LogInformation("Промпт: " + prompt);
+            return null;
 
         var kernel = CreateKernelWithToken(accessToken);
         var chatService = kernel.GetRequiredService<IChatCompletionService>();
 
         var chatHistory = new ChatHistory();
-        chatHistory.AddSystemMessage("Ты эксперт в написании коротких и правильных ответах");
-        chatHistory.AddUserMessage(prompt);
+        chatHistory.AddSystemMessage(GetSystemMessage());
+        chatHistory.AddUserMessage(BuildPrompt(model));
 
         var executionSettings = new OpenAIPromptExecutionSettings
         {
@@ -65,9 +58,21 @@ public class GigaChatPlanGeneratorService : IAiPlanGeneratorService
             executionSettings,
             kernel,
             ct);
-        var aiResponse = response.Content ?? string.Empty;
 
-        return Result<string>.Success(aiResponse);
+        var aiResponse = response.Content;
+        if (string.IsNullOrEmpty(aiResponse))
+            return null;
+
+        var dto = IprDeserialize(aiResponse);
+        if (dto == null)
+            return null;
+
+        var recommendationModel = new RecommendationModel()
+        {
+            RecommendationCompetences = dto.Select(a => a.ToIprCompetenceModel()).ToList()
+        };
+
+        return recommendationModel;
     }
 
     /// <summary>
@@ -78,14 +83,9 @@ public class GigaChatPlanGeneratorService : IAiPlanGeneratorService
         if (!string.IsNullOrEmpty(_accessToken) && DateTime.UtcNow < _tokenExpiration)
             return _accessToken;
 
-        _logger.LogInformation("ТокенНаличие");
-
         var httpClient = CreateHttpClientWithCertificate();
         if (httpClient is null)
-        {
-            _logger.LogInformation("HttpClient is null");
             return null;
-        }
 
         var request = new HttpRequestMessage(HttpMethod.Post, AuthUrl);
 
@@ -122,11 +122,7 @@ public class GigaChatPlanGeneratorService : IAiPlanGeneratorService
         var certPath = Path.Combine(AppContext.BaseDirectory, "AI", "Certificates", "russian_trusted_root_ca.cer");
 
         if (!File.Exists(certPath))
-        {
-            _logger.LogInformation("Путь не найден");
-            _logger.LogInformation(certPath);
             return null;
-        }
 
         var certificate = X509CertificateLoader.LoadCertificateFromFile(certPath);
 
@@ -171,21 +167,64 @@ public class GigaChatPlanGeneratorService : IAiPlanGeneratorService
         return builder.Build();
     }
 
-    /// <summary>
-    /// Создает UserPrompt
-    /// </summary>
-    private string BuildPrompt(string assessmentData)
+    private static List<IprResultFromAiDto>? IprDeserialize(string aiResponse)
+    {
+        var options = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true,
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            AllowTrailingCommas = true
+        };
+
+        var resultFromAiDtos = JsonSerializer.Deserialize<List<IprResultFromAiDto>>(aiResponse, options);
+        if (resultFromAiDtos is not null && resultFromAiDtos.Count != 0)
+            return resultFromAiDtos;
+
+        return null;
+    }
+
+    private static string BuildPrompt(List<CompetenceWithResultModel> model)
     {
         var sb = new StringBuilder();
-        sb.AppendLine("Тестовый запрос. Напиши ответ на следующий вопрос:");
-        sb.AppendLine(assessmentData);
+
+        sb.AppendLine("Составь идеальный индивидуальный план развития. ");
+        sb.AppendLine("Для рекомендации можешь использовать badCriteria, как то, что желательно тоже улучшить. ");
+        sb.AppendLine("[");
+        foreach (var competence in model)
+        {
+            sb.AppendLine("\"competenceName\": " + competence.CompetenceName);
+            sb.AppendLine("\"badCriteria\": [" +
+                          string.Join(", ", competence.Criteria.Where(x => !x.IsPassedThreshold)
+                              .ToList()) + "]");
+            sb.AppendLine("\"IsPassedThreshold\": " + competence.IsPassedThreshold);
+        }
+
+        sb.AppendLine("]");
+        sb.AppendLine("Ответ дать на русском языке. ");
+
         return sb.ToString();
     }
-}
 
-public record GigaChatTokenResponse
-{
-    [JsonPropertyName("access_token")] public string AccessToken { get; set; } = string.Empty;
+    private static string GetSystemMessage()
+    {
+        var sb = new StringBuilder();
 
-    [JsonPropertyName("expires_at")] public long ExpiresAt { get; set; }
+        sb.AppendLine("Ты эксперт в составлении индивидуального плана развития. ");
+        sb.AppendLine("На вход будет подан валидный JSON. Правильно распарсь его. ");
+        sb.AppendLine("Возвращай ТОЛЬКО валидный JSON массив, без дополнительных символов и текста. ");
+        sb.AppendLine("где IsPassedThreshold = true - в пункте wayToImproveCompetence надо похвалить ");
+        sb.AppendLine("Если IsPassedThreshold = false - напиши способы улучшения (как описано в выходном формате) ");
+        sb.AppendLine("Если IsPassedThreshold = null - верни пустым поле wayToImproveCompetence");
+        sb.AppendLine("Входной формат для каждой компетенции: " +
+                      "[\"competenceName\": \"название компетенции\", " +
+                      "\"badCriteria\": [\"Список недостаточно развитых критериев через запятую\"]" +
+                      "\"IsPassedThreshold\": \"булево значение. Пройден ли порог компетенции\"]");
+        sb.AppendLine("Выходной формат для каждой компетенции: " +
+                      "[\"competenceName\": \"название компетенции\", " +
+                      "\"competenceReason\": \"объяснение, почему это важно для работы (работа в ИТ сфере)\", " +
+                      "\"wayToImproveCompetence\": \"способы улучшения (самостоятельные) от 1 до 5, сколько сможешь. Разделитель - §§\"]" +
+                      "\"isEvaluated\": \"false - если IsPassedThreshold = null, иначе true\"]");
+
+        return sb.ToString();
+    }
 }
