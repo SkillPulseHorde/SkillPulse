@@ -11,6 +11,7 @@ public sealed class DeleteAssessmentCommandHandler(
     IAssessmentRepository assessmentRepository)
     : IRequestHandler<DeleteAssessmentCommand, Result<Guid>>
 {
+
     public async Task<Result<Guid>> Handle(DeleteAssessmentCommand request, CancellationToken ct)
     {
         var deleted = await assessmentRepository.DeleteAsync(request.AssessmentId, ct);

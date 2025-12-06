@@ -1,4 +1,4 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApiGateway", "ApiGateway\ApiGateway.csproj", "{5B8CA87E-A72B-4BCC-A555-70853D6EAB06}"
 EndProject
@@ -39,6 +39,16 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AssessmentService.Infrastructure", "AssessmentService.Infrastructure\AssessmentService.Infrastructure.csproj", "{315CC45D-8C4F-46E9-A552-8664BA7614B4}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AssessmentService.Tests", "AssessmentService.Tests\AssessmentService.Tests.csproj", "{2A716CE4-EC97-4B0A-B2B1-88F42B2CF41F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "RecommendationService", "RecommendationService", "{34EED4C6-0264-4152-85CA-CAAF259E624B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RecommendationService.Api", "RecommendationService.Api\RecommendationService.Api.csproj", "{EE744F35-857A-4934-A065-B310F1AD8882}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RecommendationService.Application", "RecommendationService.Application\RecommendationService.Application.csproj", "{D63AC408-1124-4C93-A851-8F7538E0AD20}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RecommendationService.Domain", "RecommendationService.Domain\RecommendationService.Domain.csproj", "{497B747A-8A11-4F6D-BD37-F03C69FADD6B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RecommendationService.Infrastructure", "RecommendationService.Infrastructure\RecommendationService.Infrastructure.csproj", "{E9180F0B-9A86-466C-B5F2-17504A1B550B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -102,6 +112,22 @@ Global
 		{315CC45D-8C4F-46E9-A552-8664BA7614B4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{315CC45D-8C4F-46E9-A552-8664BA7614B4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{315CC45D-8C4F-46E9-A552-8664BA7614B4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EE744F35-857A-4934-A065-B310F1AD8882}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EE744F35-857A-4934-A065-B310F1AD8882}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EE744F35-857A-4934-A065-B310F1AD8882}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EE744F35-857A-4934-A065-B310F1AD8882}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D63AC408-1124-4C93-A851-8F7538E0AD20}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D63AC408-1124-4C93-A851-8F7538E0AD20}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D63AC408-1124-4C93-A851-8F7538E0AD20}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D63AC408-1124-4C93-A851-8F7538E0AD20}.Release|Any CPU.Build.0 = Release|Any CPU
+		{497B747A-8A11-4F6D-BD37-F03C69FADD6B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{497B747A-8A11-4F6D-BD37-F03C69FADD6B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{497B747A-8A11-4F6D-BD37-F03C69FADD6B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{497B747A-8A11-4F6D-BD37-F03C69FADD6B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E9180F0B-9A86-466C-B5F2-17504A1B550B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E9180F0B-9A86-466C-B5F2-17504A1B550B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E9180F0B-9A86-466C-B5F2-17504A1B550B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E9180F0B-9A86-466C-B5F2-17504A1B550B}.Release|Any CPU.Build.0 = Release|Any CPU
 		{2A716CE4-EC97-4B0A-B2B1-88F42B2CF41F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{2A716CE4-EC97-4B0A-B2B1-88F42B2CF41F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2A716CE4-EC97-4B0A-B2B1-88F42B2CF41F}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -127,5 +153,10 @@ Global
 		{FA7739C0-294E-42DA-A171-D6BE9A90BF16} = {4500A987-B713-430D-B3AE-E0F6DC05928B}
 		{EF3EEA68-0F12-48C9-B04F-C1273EA93F50} = {4500A987-B713-430D-B3AE-E0F6DC05928B}
 		{2A716CE4-EC97-4B0A-B2B1-88F42B2CF41F} = {C23D83DC-5E50-4CE7-A96E-53EEC3E47DF0}
+		{34EED4C6-0264-4152-85CA-CAAF259E624B} = {DDC72A8F-B814-4EEA-924C-F4F3B0F0A68A}
+		{EE744F35-857A-4934-A065-B310F1AD8882} = {34EED4C6-0264-4152-85CA-CAAF259E624B}
+		{D63AC408-1124-4C93-A851-8F7538E0AD20} = {34EED4C6-0264-4152-85CA-CAAF259E624B}
+		{497B747A-8A11-4F6D-BD37-F03C69FADD6B} = {34EED4C6-0264-4152-85CA-CAAF259E624B}
+		{E9180F0B-9A86-466C-B5F2-17504A1B550B} = {34EED4C6-0264-4152-85CA-CAAF259E624B}
 	EndGlobalSection
 EndGlobal
