@@ -9,14 +9,14 @@ public class CompetenceEvaluationConfiguration : IEntityTypeConfiguration<Compet
     public void Configure(EntityTypeBuilder<CompetenceEvaluation> builder)
     {
         builder.ToTable("CompetenceEvaluations");
-        
+
         builder.HasKey(x => x.Id);
-        
+
         builder.HasOne<Competence>()
             .WithMany()
             .HasForeignKey(x => x.CompetenceId)
             .OnDelete(DeleteBehavior.Restrict);
-        
+
         builder.HasMany(x => x.CriterionEvaluations)
             .WithOne()
             .HasForeignKey(ce => ce.CompetenceEvaluationId)

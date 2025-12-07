@@ -9,7 +9,7 @@ public class EvaluationConfiguration : IEntityTypeConfiguration<Evaluation>
     public void Configure(EntityTypeBuilder<Evaluation> builder)
     {
         builder.ToTable("Evaluations");
-        
+
         builder.HasKey(x => x.Id);
 
         builder.HasIndex(x => new { x.AssessmentId, x.EvaluatorId })
@@ -18,7 +18,7 @@ public class EvaluationConfiguration : IEntityTypeConfiguration<Evaluation>
         builder.HasOne(x => x.Assessment)
             .WithMany(x => x.Evaluations)
             .HasForeignKey(x => x.AssessmentId);
-        
+
         builder.HasMany(x => x.CompetenceEvaluations)
             .WithOne()
             .HasForeignKey(ce => ce.EvaluationId)

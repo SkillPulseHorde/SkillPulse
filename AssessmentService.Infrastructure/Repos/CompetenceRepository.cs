@@ -36,7 +36,7 @@ public class CompetenceRepository : ICompetenceRepository
             .Include(c => c.Criteria)
             .AsNoTracking()
             .ToListAsync(ct);
-        
+
         return competences.ToDictionary(
             c => c.Id,
             c => c.Criteria.Select(cr => cr.Id).ToList());

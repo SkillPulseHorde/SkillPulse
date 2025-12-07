@@ -14,7 +14,6 @@ public sealed record CriterionSummaryDto(
     double AverageCriterionScore,
     List<string> CriterionComments);
 
-
 public static class AssessmentResultDtoExtensions
 {
     public static AssessmentResultResponseDto ToDto(this AssessmentResultModel model)
@@ -28,7 +27,7 @@ public static class AssessmentResultDtoExtensions
                     kvp.Value.CriterionSummaries.ToDictionary(
                         c => c.Key,
                         c => new CriterionSummaryDto(
-                            c.Value.Score, 
+                            c.Value.Score,
                             [..c.Value.Comments])
                     ),
                     [..kvp.Value.Comments]

@@ -26,7 +26,7 @@ public sealed class GetCompletedAssessmentsByEvaluateeIdQueryHandler(
 
         if (assessments.Count == 0)
             return new List<AssessmentShortInfoModel>();
-        
+
         var models = assessments
             .Select(a => new AssessmentShortInfoModel()
             {

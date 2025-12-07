@@ -17,10 +17,10 @@ public sealed class GetAssessmentResultQueryHandler(
     public async Task<Result<AssessmentResultModel>> Handle(GetAssessmentResultQuery request, CancellationToken ct)
     {
         var assessment = await assessmentRepository.GetByIdReadonlyAsync(request.AssessmentId, ct);
-        
+
         if (assessment is null)
             return Error.NotFound($"Аттестация с ID {request.AssessmentId} не найдена");
-        
+
         var assessmentResult = await evaluationAnalyzer.GetAssessmentResultByAssessmentIdAsync(request.AssessmentId, ct);
 
         if (assessmentResult is null)

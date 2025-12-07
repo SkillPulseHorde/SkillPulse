@@ -13,9 +13,9 @@ public sealed class GetUsersByIdsQueryHandler(IUserRepository repo)
     public async Task<Result<List<UserModel>>> Handle(GetUsersByIdsQuery request, CancellationToken ct)
     {
         var users = await repo.GetUsersByIdsReadonlyAsync(request.UserIds, ct);
-        
+
         var userModels = users.Select(u => u.ToAppModel()).ToList();
-        
+
         return userModels;
     }
 }

@@ -10,7 +10,7 @@ public class UserEvaluatorConfiguration : IEntityTypeConfiguration<UserEvaluator
     {
         builder.ToTable("UserEvaluators");
         builder.HasKey(x => new { x.EvaluateeId, x.EvaluatorId });
-        
+
         builder.HasIndex(x => x.EvaluatorId);
         builder.HasIndex(x => x.EvaluateeId);
     }

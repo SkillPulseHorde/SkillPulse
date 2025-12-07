@@ -9,6 +9,7 @@
       - userservice
       - authservice
       - assessmentservice
+      - recommendationservice
 
 
 
@@ -19,8 +20,8 @@
     ports:
       - "5001:8080"
     environment:
-      - INTERNAL_TOKEN=${INTERNAL_TOKEN}
-      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - InternalToken=${INTERNAL_TOKEN}
+      - Jwt__SecretKey=${JWT_SECRET_KEY}
       - ConnectionStrings__UserDb=Host=user-postgres;Port=5432;Database=users;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
     depends_on:
       - user-postgres
@@ -35,9 +36,9 @@
       - "5433:5432"
     volumes:
       - user_pgdata:/var/lib/postgresql/data
-  
-  
-  
+
+
+
   authservice:
     build:
       context: ./
@@ -46,9 +47,9 @@
       - "5002:8080"
     environment:
       - Services__UserService__InternalToken=${INTERNAL_TOKEN}
-      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
-      - JWT_ACCESS_EXPIRES_MINUTES=${JWT_ACCESS_EXPIRES_MINUTES}
-      - JWT_REFRESH_EXPIRES_HOURS=${JWT_REFRESH_EXPIRES_HOURS}
+      - Jwt__SecretKey=${JWT_SECRET_KEY}
+      - Jwt__AccessExpiresMinutes=${JWT_ACCESS_EXPIRES_MINUTES}
+      - Jwt__RefreshExpiresHours=${JWT_REFRESH_EXPIRES_HOURS}
       - ConnectionStrings__AuthDb=Host=auth-postgres;Port=5432;Database=auth;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
     depends_on:
       - auth-postgres
@@ -63,11 +64,9 @@
       - "5434:5432"
     volumes:
       - auth_pgdata:/var/lib/postgresql/data
-        
 
-        
-        
-           
+
+
   assessmentservice:
     build:
       context: ./
@@ -76,7 +75,7 @@
       - "5003:8080"
     environment:
       - Services__UserService__InternalToken=${INTERNAL_TOKEN}
-      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - Jwt__SecretKey=${JWT_SECRET_KEY}
       - ConnectionStrings__AssessmentDb=Host=assessment-postgres;Port=5432;Database=assessments;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
     depends_on:
       - assessment-postgres
@@ -91,8 +90,39 @@
       - "5435:5432"
     volumes:
       - assessment_pgdata:/var/lib/postgresql/data
-        
 
+
+
+  recommendationservice:
+    build:
+      context: ./
+      dockerfile: RecommendationService.Api/Dockerfile
+    ports:
+      - "5004:8080"
+    environment:
+      - Services__UserService__InternalToken=${INTERNAL_TOKEN}
+      - Services__AssessmentService__InternalToken=${INTERNAL_TOKEN}
+      - Jwt__SecretKey=${JWT_SECRET_KEY}
+      - AI__Recommendations__ApiKey=${AI_Recommendations_API_KEY}
+      - AI__Recommendations__BaseUrl=${AI_Recommendations_BASE_URL}
+      - AI__Recommendations__Model=${AI_Recommendations_MODEL}
+      - AI__LearningMaterials__ApiKey=${AI_LearningMaterials_API_KEY}
+      - AI__LearningMaterials__BaseUrl=${AI_LearningMaterials_BASE_URL}
+      - AI__LearningMaterials__Model=${AI_LearningMaterials_MODEL}
+      - ConnectionStrings__RecommendationDb=Host=recommendation-postgres;Port=5432;Database=recommendations;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+    depends_on:
+      - recommendation-postgres
+
+  recommendation-postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: recommendations
+    ports:
+      - "5436:5432"
+    volumes:
+      - recommendation_pgdata:/var/lib/postgresql/data
 
 
 
@@ -100,3 +130,4 @@ volumes:
   assessment_pgdata:
   user_pgdata:
   auth_pgdata:
+  recommendation_pgdata:

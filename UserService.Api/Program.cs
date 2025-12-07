@@ -1,12 +1,11 @@
 using MediatR;
-using UserService.Extensions.DependencyInjection;
+using UserService.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using UserService;
 using UserService.Application.Models;
 using UserService.Application.Queries;
 using UserService.Dto;
 using Common.Shared.Auth.Extensions;
-using UserService.Middleware;
 using Common.Middleware;
 
 #region di
@@ -25,11 +24,14 @@ var app = builder.Build();
 app.UseSwagger();
 app.UseSwaggerUI();
 
-app.UseMiddleware<InternalAuthMiddleware>();
+app.UseMiddleware<ServiceAuthenticationMiddleware>(app.Configuration.GetSection("InternalToken").Value ??
+                                                   throw new InvalidOperationException("InternalToken не был передан"));
+
+app.UseAuthentication();
+
 if (app.Environment.IsDevelopment())
     app.UseMiddleware<DevelopmentAuthenticationMiddleware>();
 
-app.UseAuthentication();
 app.UseAuthorization();
 
 #endregion
@@ -84,7 +86,7 @@ app.MapGet("/api/users/{email}/id", async (string email, IMediator mediator, Can
             ? Results.Ok(result.Value)
             : result.Error!.ToProblemDetails();
     })
-    .AddEndpointFilter<RequireInternalRoleFilter>()
+    .RequireAuthorization("ServiceOnly")
     .Produces<Guid>()
     .WithSummary("Получить идентификатор пользователя по email")
     .WithDescription("Возвращает только GUID пользователя.");
@@ -117,10 +119,9 @@ app.MapPost("/api/users/exist", async (
             ? Results.Ok(result.Value)
             : result.Error!.ToProblemDetails();
     })
-    .RequireAuthorization("Authenticated")
+    .RequireAuthorization("AuthenticatedAndService")
     .Produces<bool>()
-    .WithSummary("Проверить существование пользователей по списку ID")
-    .AddEndpointFilter<RequireInternalRoleFilter>();
+    .WithSummary("Проверить существование пользователей по списку ID");
 
 app.MapPost("/api/users/by-ids", async (
         [FromBody] GetUsersByIdsRequestDto request,
@@ -133,10 +134,9 @@ app.MapPost("/api/users/by-ids", async (
             ? Results.Ok(result.Value.Select(u => u.ToDto()).ToList())
             : result.Error!.ToProblemDetails();
     })
-    .RequireAuthorization("Authenticated")
+    .RequireAuthorization("AuthenticatedAndService")
     .Produces<List<UserShortInfoDto>>()
-    .WithSummary("Получить пользователей по списку ID")
-    .AddEndpointFilter<RequireInternalRoleFilter>();
+    .WithSummary("Получить пользователей по списку ID");
 
 #endregion
 

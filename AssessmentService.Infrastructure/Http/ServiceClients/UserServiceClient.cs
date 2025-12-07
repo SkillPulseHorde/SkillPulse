@@ -16,7 +16,7 @@ public sealed class UserServiceClient(
 {
     private readonly string _internalToken = options.Value.InternalToken;
     private const string BaseUrl = "/api/users";
-    
+
     public async Task<bool> AreUsersExistAsync(List<Guid> userIds, CancellationToken ct)
     {
         var requestDto = new CheckUsersExistRequestDto
@@ -44,7 +44,7 @@ public sealed class UserServiceClient(
         using var request = new HttpRequestMessage(HttpMethod.Post, $"{BaseUrl}/by-ids");
         request.Content = JsonContent.Create(requestDto);
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _internalToken);
-        
+
         using var response = await httpClient.SendAsync(request, ct);
         response.EnsureSuccessStatusCode();
 

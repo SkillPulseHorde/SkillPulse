@@ -53,12 +53,12 @@ public sealed class UserRepository : IUserRepository
             .AsNoTracking()
             .ToListAsync(ct);
     }
-    
+
     public async Task<bool> AreUsersExistAsync(List<Guid> userIds, CancellationToken ct = default)
     {
         if (userIds.Count == 0)
             return true;
-        
+
         var foundCount = await _dbContext.Users
             .AsNoTracking()
             .Where(u => userIds.Contains(u.Id))
@@ -67,12 +67,12 @@ public sealed class UserRepository : IUserRepository
 
         return foundCount == userIds.Distinct().Count();
     }
-    
+
     public async Task<List<User>> GetUsersByIdsReadonlyAsync(List<Guid> userIds, CancellationToken ct = default)
     {
         if (userIds.Count == 0)
             return [];
-        
+
         return await _dbContext.Users
             .AsNoTracking()
             .Where(u => userIds.Contains(u.Id))

@@ -26,7 +26,7 @@ public static class GetAllCompetences
             .Produces<List<CompetenceResponseDto>>()
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .WithSummary("Получить все компетенции")
-            .RequireAuthorization("Authenticated");
+            .RequireAuthorization("AuthenticatedAndService");
 
         return app;
     }

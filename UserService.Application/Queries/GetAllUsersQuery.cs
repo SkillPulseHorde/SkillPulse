@@ -16,12 +16,12 @@ public sealed class GetAllUsersQueryHandler(IUserRepository userRepository) : IR
         var currentUser = await userRepository.GetUserReadonlyByIdAsync(request.CurrentUserId, ct);
         if (currentUser == null)
             return Result<List<User>>.Failure(Error.NotFound($"Пользователь с id {request.CurrentUserId} не найден."));
-        
+
         var userTeamName = currentUser.TeamName;
         var users = await userRepository.GetAllUsersReadonlyAsync(
-            request.CurrentUserId, 
+            request.CurrentUserId,
             userTeamName,
-            request.IsCurrentUserIncluded ?? false, 
+            request.IsCurrentUserIncluded ?? false,
             ct);
 
         return Result<List<User>>.Success(users);

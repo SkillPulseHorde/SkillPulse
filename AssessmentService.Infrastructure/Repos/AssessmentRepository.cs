@@ -13,7 +13,7 @@ public class AssessmentRepository : IAssessmentRepository
     {
         _dbContext = dbContext;
     }
-    
+
     public async Task<Guid> CreateAsync(Assessment assessment, CancellationToken ct = default)
     {
         assessment.CreatedAt = DateTime.UtcNow;
@@ -29,7 +29,7 @@ public class AssessmentRepository : IAssessmentRepository
             .AsNoTracking()
             .FirstOrDefaultAsync(a => a.Id == assessmentId, ct);
     }
-    
+
     public async Task<Assessment?> GetByIdAsync(Guid assessmentId, CancellationToken ct = default)
     {
         return await _dbContext.Assessments
@@ -59,7 +59,7 @@ public class AssessmentRepository : IAssessmentRepository
 
         var query = _dbContext.Assessments
             .AsNoTracking();
-        
+
         query = isActive
             ? query.Where(a => a.StartAt <= now && a.EndsAt > now)
             : query.Where(a => a.StartAt > now);
@@ -75,11 +75,11 @@ public class AssessmentRepository : IAssessmentRepository
     public async Task<List<Assessment>> GetActiveAssessmentsByEvaluatorIdReadonlyAsync(Guid evaluatorId, CancellationToken ct = default)
     {
         var now = DateTime.UtcNow;
-        
+
         return await _dbContext.Assessments
             .AsNoTracking()
             .Where(a => a.Evaluators.Any(e => e.EvaluatorId == evaluatorId)
-                        && a.StartAt <= now 
+                        && a.StartAt <= now
                         && a.EndsAt > now
                         && a.Evaluations.All(e => e.EvaluatorId != evaluatorId)) // evaluator ещё не оценил
             .OrderBy(a => a.EndsAt)

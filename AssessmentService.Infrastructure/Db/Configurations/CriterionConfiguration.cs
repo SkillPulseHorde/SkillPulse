@@ -10,7 +10,7 @@ public class CriterionConfiguration : IEntityTypeConfiguration<Criterion>
     {
         builder.ToTable("Criteria");
         builder.HasKey(x => x.Id);
-        
+
         builder.Property(x => x.Level)
             .HasConversion<string>();
 

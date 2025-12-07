@@ -20,7 +20,7 @@ public sealed class GetRefreshTokenCommandHandler : IRequestHandler<GetRefreshTo
     private readonly IUserServiceClient _userServiceClient;
 
     public GetRefreshTokenCommandHandler(
-        IJwtProvider jwtProvider, 
+        IJwtProvider jwtProvider,
         IAuthRepository authRepository,
         IUserServiceClient userServiceClient)
     {
@@ -33,14 +33,14 @@ public sealed class GetRefreshTokenCommandHandler : IRequestHandler<GetRefreshTo
     {
         var user = await _authRepository.GetUserByRefreshTokenReadOnlyAsync(request.RefreshToken, ct);
         if (user is null)
-            return Result<TokensModel>.Failure(Error.Unauthorized("Ошибка авторизации"));
+            return Error.Unauthorized("Ошибка авторизации");
         if (user.RefreshTokenExpiryTime < DateTimeOffset.UtcNow)
-            return Result<TokensModel>.Failure(Error.Unauthorized("Токен истек"));
+            return Error.Unauthorized("Токен истек");
 
         var userFromUserService = await _userServiceClient.GetUserByIdAsync(user.UserId, ct);
         if (userFromUserService is null)
-            return Result<TokensModel>.Failure(Error.Unauthorized("Пользователь не найден в UserService"));
-        
+            return Error.Unauthorized("Пользователь не найден в UserService");
+
         var accessToken = _jwtProvider.GenerateAccessToken(user, userFromUserService.Position);
         var refreshToken = _jwtProvider.GenerateRefreshToken();
 
@@ -51,13 +51,9 @@ public sealed class GetRefreshTokenCommandHandler : IRequestHandler<GetRefreshTo
 
         await _authRepository.UpdateRefreshTokenUserAsync(user, ct);
 
-        var tokenResponse = new TokensModel()
-        {
-            AccessToken = accessToken,
-            RefreshToken = refreshToken,
-        };
+        var tokenResponse = TokensModel.Create(accessToken, refreshToken);
 
-        return Result<TokensModel>.Success(tokenResponse);
+        return tokenResponse;
     }
 }
 

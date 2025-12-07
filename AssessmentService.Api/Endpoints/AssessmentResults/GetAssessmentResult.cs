@@ -25,7 +25,7 @@ public static class GetAssessmentResult
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .WithSummary("Получить результат аттестации по её ID")
-            .RequireAuthorization("Authenticated");
+            .RequireAuthorization("AuthenticatedAndService");
 
         return app;
     }

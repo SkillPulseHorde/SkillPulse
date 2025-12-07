@@ -16,7 +16,7 @@ public sealed class EvaluationAnalyzer(
         return await assessmentResultRepository.GetByAssessmentIdAsync(assessmentId, ct) ??
                await CreateAndGetAssessmentResultAsync(assessmentId, ct);
     }
-    
+
     public async Task<List<AssessmentResult>> CreateAssessmentResultsAsync(List<Guid> assessmentIds, CancellationToken ct = default)
     {
         if (assessmentIds.Count == 0)
@@ -24,9 +24,9 @@ public sealed class EvaluationAnalyzer(
 
         // Получаем все оценки для всех assessmentId
         var evaluationsByAssessmentId = await evaluationRepository.GetEvaluationsByAssessmentIdsReadonlyAsync(assessmentIds, ct);
-        
+
         var competenceCriteriaMap = await competenceRepository.GetCompetenceCriteriaMapAsync(ct);
-        
+
         var resultsToCreate = assessmentIds
             .Where(assessmentId => evaluationsByAssessmentId.TryGetValue(assessmentId, out var evaluations) && evaluations.Length > 0)
             .Select(assessmentId =>
@@ -44,26 +44,26 @@ public sealed class EvaluationAnalyzer(
 
         return resultsToCreate;
     }
-    
+
     private async Task<AssessmentResult?> CreateAndGetAssessmentResultAsync(Guid assessmentId, CancellationToken ct = default)
     {
         var evaluations = await evaluationRepository.GetEvaluationsByAssessmentIdReadonlyAsync(assessmentId, ct);
         if (evaluations.Length == 0)
             return null; // Если никто не оценил
-        
+
         var competenceCriteriaMap = await competenceRepository.GetCompetenceCriteriaMapAsync(ct);
-        
+
         var assessmentResult = CalculateAssessmentResult(assessmentId, evaluations, competenceCriteriaMap);
-        
+
         if (assessmentResult is not null)
             await assessmentResultRepository.CreateAsync(assessmentResult, ct);
-        
+
         return assessmentResult;
     }
 
     private AssessmentResult? CalculateAssessmentResult(
-        Guid assessmentId, 
-        Evaluation[] evaluations, 
+        Guid assessmentId,
+        Evaluation[] evaluations,
         Dictionary<Guid, List<Guid>> competenceCriteriaMap)
     {
         var competenceSummaries = competenceCriteriaMap.Keys.ToDictionary(
@@ -80,16 +80,16 @@ public sealed class EvaluationAnalyzer(
 
                 if (competenceEvaluationsForCompetence.Count == 0)
                     return null;
-                
+
                 // Собираем комментарии к компетенции
                 var competenceComments = competenceEvaluationsForCompetence
                     .Where(x => !string.IsNullOrWhiteSpace(x.CompetenceEvaluation.Comment))
                     .Select(x => x.CompetenceEvaluation.Comment)
                     .ToList();
-                
+
                 // Получаем критерии для данной компетенции
                 var allCriterionIds = competenceCriteriaMap[competenceId];
-                
+
                 var criterionSummaries = allCriterionIds
                     .Select(criterionId =>
                     {
@@ -106,51 +106,51 @@ public sealed class EvaluationAnalyzer(
 
                         if (criterionEvals.Count == 0)
                             return null;
-                        
+
                         var totalWeightedScore = criterionEvals
                             .Sum(x => x.CriterionEval!.Score!.Value * x.RoleRatio);
-                        
+
                         var totalWeight = criterionEvals
                             .Sum(x => x.RoleRatio);
-                        
+
                         var criterionComments = criterionEvals
                             .Where(x => !string.IsNullOrWhiteSpace(x.CriterionEval!.Comment))
                             .Select(x => x.CriterionEval!.Comment!)
                             .ToList();
-                        
+
                         return new
                         {
                             CriterionId = criterionId,
                             TotalWeightedScore = totalWeightedScore,
                             TotalWeight = totalWeight,
-                            AverageScore = totalWeight > 0 
-                                ? Math.Round((double)totalWeightedScore / totalWeight, 2) 
+                            AverageScore = totalWeight > 0
+                                ? Math.Round((double)totalWeightedScore / totalWeight, 2)
                                 : 0,
                             Comments = criterionComments
                         };
                     })
                     .Where(x => x is not null && x.TotalWeight > 0)
                     .ToList();
-                
+
                 if (criterionSummaries.Count == 0)
                     return null;
 
                 var competenceAverageScore = Math.Round(criterionSummaries.Average(x => x!.AverageScore), 2);
-                    
+
                 var criterionSummariesDict = criterionSummaries.ToDictionary(
                     x => x!.CriterionId,
                     x => new CriterionSummary(x!.AverageScore, x.Comments));
-                
+
                 return new CompetenceSummary(
                     competenceAverageScore,
                     criterionSummariesDict,
                     competenceComments);
             })
             .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
-        
+
         if (competenceSummaries.Values.All(cs => cs is null))
             return null;
-        
+
         return new AssessmentResult
         {
             AssessmentId = assessmentId,

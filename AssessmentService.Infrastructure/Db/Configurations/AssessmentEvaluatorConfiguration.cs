@@ -9,9 +9,9 @@ public class AssessmentEvaluatorConfiguration : IEntityTypeConfiguration<Assessm
     public void Configure(EntityTypeBuilder<AssessmentEvaluator> builder)
     {
         builder.ToTable("AssessmentEvaluators");
-        
+
         builder.HasKey(x => new { x.AssessmentId, x.EvaluatorId });
-        
+
         builder.HasOne(x => x.Assessment)
             .WithMany(a => a.Evaluators)
             .HasForeignKey(x => x.AssessmentId)

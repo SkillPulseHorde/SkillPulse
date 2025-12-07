@@ -11,9 +11,9 @@ public class AssessmentResultConfiguration : IEntityTypeConfiguration<Assessment
     public void Configure(EntityTypeBuilder<AssessmentResult> builder)
     {
         builder.ToTable("AssessmentResults");
-        
+
         builder.HasKey(x => x.AssessmentId);
-        
+
         // Настройка сериализации в JSON
         builder.Property(x => x.Data)
             .HasConversion(

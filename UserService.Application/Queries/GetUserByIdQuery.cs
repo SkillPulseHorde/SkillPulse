@@ -20,8 +20,8 @@ public sealed class GetUserByIdQueryHandler : IRequestHandler<GetUserByIdQuery, 
     {
         var user = await _repo.GetUserReadonlyByIdAsync(request.Id, ct);
 
-        return user is null 
-            ? Result<UserModel>.Failure(Error.NotFound($"Пользователь с id {request.Id} не найден.")) 
+        return user is null
+            ? Result<UserModel>.Failure(Error.NotFound($"Пользователь с id {request.Id} не найден."))
             : Result<UserModel>.Success(user.ToAppModel());
     }
 }

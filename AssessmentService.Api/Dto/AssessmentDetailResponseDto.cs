@@ -5,10 +5,10 @@ namespace AssessmentService.Api.Dto;
 public sealed record AssessmentDetailResponseDto
 {
     public required Guid AssessmentId { get; init; }
-    
+
     public required DateTime StartAt { get; init; }
     public required DateTime EndsAt { get; init; }
-    
+
     public required EvaluateeShortInfoDto EvaluateeInfo { get; init; }
 
     public required List<Guid> EvaluatorIds { get; init; }

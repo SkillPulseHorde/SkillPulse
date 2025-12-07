@@ -22,9 +22,9 @@ internal sealed class GetSubordinatesByUserIdQueryHandler : IRequestHandler<GetS
         {
             return Result<SubordinatesModel>.Failure(Error.NotFound($"Пользователь с id {request.Id} не найден."));
         }
-        
+
         var subordinates = await _repo.GetSubordinatesReadonlyByUserIdAsync(request.Id, ct);
-        
+
         return Result<SubordinatesModel>.Success(
             new SubordinatesModel(
                 subordinates

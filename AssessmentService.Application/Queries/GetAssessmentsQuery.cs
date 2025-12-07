@@ -16,12 +16,12 @@ public sealed class GetAssessmentsQueryHandler(
     public async Task<Result<List<AssessmentModel>>> Handle(GetAssessmentsQuery request, CancellationToken ct)
     {
         var assessments = await assessmentRepository.GetAssessmentsReadonlyAsync(request.IsActive, ct);
-        
+
         if (assessments.Count == 0)
         {
             return new List<AssessmentModel>();
         }
-        
+
         var evaluateeIds = assessments.Select(a => a.EvaluateeId).Distinct().ToList();
         var users = await userServiceClient.GetUsersByIdsAsync(evaluateeIds, ct);
         var userDict = users.ToDictionary(u => u.Id, u => u);
@@ -34,7 +34,7 @@ public sealed class GetAssessmentsQueryHandler(
                 {
                     return null;
                 }
-                
+
                 return new AssessmentModel
                 {
                     Id = a.Id,
@@ -48,7 +48,7 @@ public sealed class GetAssessmentsQueryHandler(
             })
             .OfType<AssessmentModel>()
             .ToList();
-        
+
         return assessmentModels;
     }
 }
