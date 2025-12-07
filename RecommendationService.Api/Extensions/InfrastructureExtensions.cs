@@ -28,16 +28,16 @@ public static class InfrastructureExtensions
 
 
         // AI конфигураторы
-        services.AddIprAiConfiguration(configuration);
-        services.AddLearningMaterialAiConfiguration(configuration);
+        services.AddRecommendationsAiConfiguration(configuration);
+        services.AddLearningMaterialsAiConfiguration(configuration);
 
 
         // Сервисы
-        services.AddScoped<IAiIprGeneratorService, GetPrompt>(); // Для любой нейросети, работающей по OpenApiAi
-        // services.AddScoped<IAiPlanGeneratorService, GigaChatPlanGeneratorService>(); // С получением AccessToken (ГигаЧат)
+        //services.AddScoped<IAiRecommendationsGeneratorService, OpenAiApiRecommendationsGeneratorService>(); // Для любой нейросети, работающей по OpenApiAi
+        services.AddScoped<IAiRecommendationsGeneratorService, GigaChatRecommendationsGeneratorService>(); // С получением AccessToken (ГигаЧат)
 
-        services.AddScoped<IAiLearningMaterialSearchService, OpenAiApiLearningMaterialGeneratorService>();
-        // services.AddScoped<IAiMaterialSearchService, GigaChatLearningMaterialGeneratorService>();
+        services.AddScoped<IALearningMaterialsSearchService, OpenAiApiLearningMaterialGeneratorService>();
+        // services.AddScoped<IALearningMaterialsSearchService, GigaChatLearningMaterialsGeneratorService>();
 
 
         // Клиенты

@@ -24,7 +24,7 @@ var app = builder.Build();
 app.UseSwagger();
 app.UseSwaggerUI();
 
-app.UseMiddleware<ServiceAuthenticationMiddleware>(app.Configuration["INTERNAL_TOKEN"]?.ToString() ?? app.Configuration.GetSection("InternalToken").Value ?? "");
+app.UseMiddleware<ServiceAuthenticationMiddleware>(app.Configuration["INTERNAL_TOKEN"] ?? app.Configuration.GetSection("InternalToken").Value ?? "");
 
 app.UseAuthentication();
 

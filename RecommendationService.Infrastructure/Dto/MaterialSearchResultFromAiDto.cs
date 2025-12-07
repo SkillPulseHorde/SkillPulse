@@ -8,10 +8,10 @@ public sealed record MaterialSearchResultFromAiDto
     public required string Title { get; init; }
 
     [JsonPropertyName("author")]
-    public required string?  Author { get; init; }
+    public required string? Author { get; init; }
 
     [JsonPropertyName("type")]
-    public required string?  Type { get; init; }
+    public required string? Type { get; init; }
 
     [JsonPropertyName("link")]
     public required string? Link { get; init; }

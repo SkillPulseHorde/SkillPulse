@@ -18,13 +18,13 @@ public sealed class GetActiveAssessmentsByEvaluatorIdQueryHandler(
         var isEvaluatorExists = await userServiceClient.AreUsersExistAsync([request.EvaluatorId], ct);
         if (!isEvaluatorExists)
             return Error.NotFound($"Пользователь {request.EvaluatorId} не найден.");
-        
+
         var assessments = await assessmentRepository.GetActiveAssessmentsByEvaluatorIdReadonlyAsync(request.EvaluatorId, ct);
-        
+
         if (assessments.Count == 0)
             return new List<AssessmentModel>();
 
-        
+
         var evaluateeIds = assessments.Select(a => a.EvaluateeId).Distinct().ToList();
         var users = await userServiceClient.GetUsersByIdsAsync(evaluateeIds, ct);
         var userDict = users.ToDictionary(u => u.Id, u => u);
@@ -37,7 +37,7 @@ public sealed class GetActiveAssessmentsByEvaluatorIdQueryHandler(
                 {
                     return null; // Не включаем аттестацию, если пользователь не найден
                 }
-                
+
                 return new AssessmentModel
                 {
                     Id = a.Id,
@@ -51,7 +51,7 @@ public sealed class GetActiveAssessmentsByEvaluatorIdQueryHandler(
             })
             .OfType<AssessmentModel>()
             .ToList();
-        
+
         return assessmentModels;
     }
 }

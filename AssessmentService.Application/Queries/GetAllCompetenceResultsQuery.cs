@@ -6,7 +6,7 @@ using MediatR;
 
 namespace AssessmentService.Application.Queries;
 
-public sealed record GetAllCompetenceResultsQuery(Guid UserId, Guid CompetenceId) 
+public sealed record GetAllCompetenceResultsQuery(Guid UserId, Guid CompetenceId)
     : IRequest<Result<List<CompetenceResultHistoryModel>>>;
 
 public sealed class GetAllCompetenceResultsQueryHandler(
@@ -16,7 +16,7 @@ public sealed class GetAllCompetenceResultsQueryHandler(
     : IRequestHandler<GetAllCompetenceResultsQuery, Result<List<CompetenceResultHistoryModel>>>
 {
     public async Task<Result<List<CompetenceResultHistoryModel>>> Handle(
-        GetAllCompetenceResultsQuery request, 
+        GetAllCompetenceResultsQuery request,
         CancellationToken ct)
     {
         // Получаем все завершенные оценки для пользователя
@@ -31,7 +31,7 @@ public sealed class GetAllCompetenceResultsQueryHandler(
         // Получаем существующие результаты
         var existingResults = await assessmentResultRepository
             .GetByAssessmentIdsAsync(assessmentIds, ct);
-        
+
         var existingResultsDict = existingResults.ToDictionary(r => r.AssessmentId);
 
         // Определяем, для каких оценок нужно создать результаты
@@ -39,7 +39,7 @@ public sealed class GetAllCompetenceResultsQueryHandler(
             .Where(id => !existingResultsDict.ContainsKey(id))
             .ToList();
 
-        // Создаем недостающие результаты 
+        // Создаем недостающие результаты
         if (missingAssessmentIds.Count > 0)
         {
             var newResults = await evaluationAnalyzer

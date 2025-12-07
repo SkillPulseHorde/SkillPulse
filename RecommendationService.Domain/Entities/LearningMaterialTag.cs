@@ -1,4 +1,4 @@
-﻿namespace RecommendationService.Domain.ValueObjects;
+﻿namespace RecommendationService.Domain.Entities;
 
 public enum LearningMaterialTag
 {

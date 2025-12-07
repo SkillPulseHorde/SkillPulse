@@ -19,8 +19,8 @@ public sealed class GetUserIdByEmailQueryHandler : IRequestHandler<GetUserIdByEm
     {
         var userId = await _repo.GetUserIdByEmailAsync(request.Email, ct);
 
-        return userId is null 
-            ? Result<Guid>.Failure(Error.NotFound($"Пользователь с email {request.Email} не найден.")) 
+        return userId is null
+            ? Result<Guid>.Failure(Error.NotFound($"Пользователь с email {request.Email} не найден."))
             : Result<Guid>.Success(userId.Value);
     }
 }

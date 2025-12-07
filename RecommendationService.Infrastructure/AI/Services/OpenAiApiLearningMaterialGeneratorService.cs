@@ -5,19 +5,20 @@ using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
 using RecommendationService.Application.AiServiceAbstract;
+using RecommendationService.Application.Exceptions;
 using RecommendationService.Application.Models;
 using RecommendationService.Infrastructure.AI.Configuration;
 using RecommendationService.Infrastructure.Dto;
 
 namespace RecommendationService.Infrastructure.AI.Services;
 
-public sealed class OpenAiApiLearningMaterialGeneratorService : IAiLearningMaterialSearchService
+public class OpenAiApiLearningMaterialGeneratorService : IALearningMaterialsSearchService
 {
     private readonly Kernel _kernel;
-    private readonly LearningMaterialAiOptions _settings;
+    private readonly LearningMaterialsAiOptions _settings;
 
     public OpenAiApiLearningMaterialGeneratorService(
-        IOptions<LearningMaterialAiOptions> settings)
+        IOptions<LearningMaterialsAiOptions> settings)
     {
         _settings = settings.Value;
 
@@ -29,8 +30,7 @@ public sealed class OpenAiApiLearningMaterialGeneratorService : IAiLearningMater
         _kernel = builder.Build();
     }
 
-    public async Task<List<LearningMaterialModel>?> SearchLearningMaterialsAsync(
-        string competence,
+    public async Task<List<LearningMaterialModel>> SearchLearningMaterialsAsync(string competence,
         List<string> tags,
         CancellationToken ct = default)
     {
@@ -46,27 +46,48 @@ public sealed class OpenAiApiLearningMaterialGeneratorService : IAiLearningMater
             ResponseFormat = "json_object"
         };
 
-        var response = await chatService.GetChatMessageContentAsync(
-            chatHistory,
-            executionSettings,
-            _kernel,
-            ct);
+        try
+        {
+            var response = await chatService.GetChatMessageContentAsync(
+                chatHistory,
+                executionSettings,
+                _kernel,
+                ct);
 
-        var aiResponseJson = response.Content;
-        if (string.IsNullOrEmpty(aiResponseJson))
-            return null;
+            var aiResponseJson = response.Content;
+            if (string.IsNullOrWhiteSpace(aiResponseJson))
+                throw new AiInvalidResponseException("AI вернула пустой ответ", upstreamBody: aiResponseJson);
 
-        var dto = LearningMaterialDeserialize(aiResponseJson);
+            var dto = LearningMaterialDeserialize(aiResponseJson);
+            if (dto is null || dto.Count == 0)
+                return [];
 
-        var materials = dto?.Select(resultFromAiDto =>
-            new LearningMaterialModel()
-            {
-                LearningMaterialName = resultFromAiDto.Title,
-                LearningMaterialType = resultFromAiDto.Type ?? string.Empty,
-                LearningMaterialUrl = resultFromAiDto.Link ?? string.Empty,
-            }).ToList();
+            var materials = dto.Select(resultFromAiDto =>
+                new LearningMaterialModel()
+                {
+                    LearningMaterialName = resultFromAiDto.Title,
+                    LearningMaterialType = resultFromAiDto.Type ?? string.Empty,
+                    LearningMaterialUrl = resultFromAiDto.Link ?? string.Empty,
+                }).ToList();
 
-        return materials;
+            return materials;
+        }
+        catch (TaskCanceledException ex) when (ct.IsCancellationRequested)
+        {
+            throw new TimeoutException("Превышено время ожидания ответа от AI сервиса", ex);
+        }
+        catch (HttpRequestException ex)
+        {
+            throw new AiTransientException("Ошибка при вызове AI сервиса",
+                upstreamBody: ex.Message,
+                inner: ex);
+        }
+        catch (JsonException ex)
+        {
+            throw new AiInvalidResponseException("Ошибка при разборе ответа от AI сервиса",
+                upstreamBody: ex.Message,
+                inner: ex);
+        }
     }
 
     private static List<MaterialSearchResultFromAiDto>? LearningMaterialDeserialize(string aiResponse)
@@ -78,11 +99,20 @@ public sealed class OpenAiApiLearningMaterialGeneratorService : IAiLearningMater
             AllowTrailingCommas = true
         };
 
-        var materials = JsonSerializer.Deserialize<List<MaterialSearchResultFromAiDto>>(aiResponse, options);
-        if (materials is not null && materials.Count != 0)
-            return materials;
+        try
+        {
+            var materials = JsonSerializer.Deserialize<List<MaterialSearchResultFromAiDto>>(aiResponse, options);
+            if (materials is not null && materials.Count != 0)
+                return materials;
 
-        return null;
+            return null;
+        }
+        catch (JsonException ex)
+        {
+            throw new AiInvalidResponseException("Ошибка при разборе ответа от AI сервиса",
+                upstreamBody: ex.Message,
+                inner: ex);
+        }
     }
 
     private static string BuildPrompt(string competence, List<string> tags)

@@ -5,7 +5,7 @@ using RecommendationService.Infrastructure.Db;
 
 namespace RecommendationService.Infrastructure.Repos;
 
-public class IndividualDevelopmentPlanRepository : IIndividualDevelopmentPlanRepository
+public sealed class IndividualDevelopmentPlanRepository : IIndividualDevelopmentPlanRepository
 {
     private readonly RecommendationDbContext _context;
 
@@ -22,7 +22,7 @@ public class IndividualDevelopmentPlanRepository : IIndividualDevelopmentPlanRep
     }
 
     public async Task<Guid> CreateAsync(
-        IndividualDevelopmentPlan plan, 
+        IndividualDevelopmentPlan plan,
         CancellationToken ct = default)
     {
         await _context.IndividualDevelopmentPlans.AddAsync(plan, ct);

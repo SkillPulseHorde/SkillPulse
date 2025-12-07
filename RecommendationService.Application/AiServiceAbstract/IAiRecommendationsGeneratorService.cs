@@ -5,7 +5,7 @@ namespace RecommendationService.Application.AiServiceAbstract;
 /// <summary>
 /// Сервис для генерации ИПР
 /// </summary>
-public interface IAiIprGeneratorService
+public interface IAiRecommendationsGeneratorService
 {
-    Task<RecommendationModel?> GenerateIprAsync(List<CompetenceWithResultModel> model, CancellationToken ct = default);
+    Task<RecommendationsModel> GenerateRecommendationsAsync(List<CompetenceWithResultModel> model, CancellationToken ct = default);
 }

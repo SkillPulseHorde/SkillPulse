@@ -10,12 +10,12 @@ public static class GetRecommendation
 {
     public static IEndpointRouteBuilder MapGetRecommendationEndpoint(this IEndpointRouteBuilder app)
     {
-        app.MapPost("/api/recommendation", async (
+        app.MapPost("/api/recommendations", async (
                 [FromBody] GetRecommendationRequestDto request,
                 IMediator mediator,
                 CancellationToken ct) =>
             {
-                var command = new GetRecommendationsByUserIdCommand
+                var command = new GetRecommendationsByAssessmentIdCommand
                 {
                     UserId = request.UserId,
                     AssessmentId = request.AssessmentId
@@ -26,10 +26,10 @@ public static class GetRecommendation
                     ? Results.Ok(result.Value.ToResponseDto())
                     : result.Error!.ToProblemDetails();
             })
-            .Produces<string>()
+            .Produces<RecommendationsResponseDto>()
             .ProducesProblem(StatusCodes.Status404NotFound)
             .WithSummary("Получить рекомендацию для конкретного пользователя")
-            .WithDescription("Получить рекомендацию для пользователя по идентификатору пользователя и тестирования")
+            .WithDescription("Получить рекомендацию для пользователя по идентификатору пользователя и аттестации")
             .WithOpenApi(operation =>
             {
                 operation.RequestBody.Content["application/json"].Example = new OpenApiObject

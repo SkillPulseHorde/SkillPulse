@@ -37,7 +37,7 @@ public class UserEvaluatorRepository : IUserEvaluatorRepository
             .ToListAsync(ct);
 
         _dbContext.UserEvaluators.RemoveRange(existing);
-        
+
         var linksToAdd = newEvaluatorIds
             .Distinct()
             .Select(evaluatorId => new UserEvaluator

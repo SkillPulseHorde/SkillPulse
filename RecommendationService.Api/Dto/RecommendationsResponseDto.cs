@@ -2,12 +2,12 @@
 
 namespace RecommendationService.Api.Dto;
 
-public sealed record GetRecommendationResponseDto
+public sealed record RecommendationsResponseDto
 {
-    public List<IprCompetenceModel> RecommendationCompetences { get; set; } = [];
+    public List<CompetenceRecommendation> RecommendationCompetences { get; set; } = [];
 }
 
-public sealed record IprCompetenceDto
+public sealed record CompetenceRecommendation
 {
     public required string CompetenceName { get; set; } = string.Empty;
 
@@ -31,17 +31,17 @@ public sealed record LearningMaterialDto
 
 public static class GetRecommendationResponseDtoExtensions
 {
-    public static GetRecommendationResponseDto ToResponseDto(this RecommendationModel model)
+    public static RecommendationsResponseDto ToResponseDto(this RecommendationsModel model)
     {
-        return new GetRecommendationResponseDto()
+        return new RecommendationsResponseDto()
         {
-            RecommendationCompetences = model.RecommendationCompetences.Select(c => new IprCompetenceModel
+            RecommendationCompetences = model.RecommendationCompetences.Select(c => new CompetenceRecommendation
             {
                 CompetenceName = c.CompetenceName,
                 CompetenceReason = c.CompetenceReason,
                 WayToImproveCompetence = c.WayToImproveCompetence,
                 IsEvaluated = c.IsEvaluated,
-                LearningMaterials = c.LearningMaterials.Select(l => new LearningMaterialModel
+                LearningMaterials = c.LearningMaterials.Select(l => new LearningMaterialDto
                 {
                     LearningMaterialName = l.LearningMaterialName,
                     LearningMaterialUrl = l.LearningMaterialUrl,

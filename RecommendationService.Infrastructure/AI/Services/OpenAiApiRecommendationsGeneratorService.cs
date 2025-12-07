@@ -5,18 +5,19 @@ using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
 using RecommendationService.Application.AiServiceAbstract;
+using RecommendationService.Application.Exceptions;
 using RecommendationService.Application.Models;
 using RecommendationService.Infrastructure.AI.Configuration;
 using RecommendationService.Infrastructure.Dto;
 
 namespace RecommendationService.Infrastructure.AI.Services;
 
-public class GetPrompt : IAiIprGeneratorService
+public class OpenAiApiRecommendationsGeneratorService : IAiRecommendationsGeneratorService
 {
     private readonly Kernel _kernel;
-    private readonly IprAiOptions _settings;
+    private readonly RecommendationsAiOptions _settings;
 
-    public GetPrompt(IOptions<IprAiOptions> settings)
+    public OpenAiApiRecommendationsGeneratorService(IOptions<RecommendationsAiOptions> settings)
     {
         _settings = settings.Value;
 
@@ -28,45 +29,57 @@ public class GetPrompt : IAiIprGeneratorService
         _kernel = builder.Build();
     }
 
-    public async Task<RecommendationModel?> GenerateIprAsync(
-        List<CompetenceWithResultModel> model,
+    public async Task<RecommendationsModel> GenerateRecommendationsAsync(List<CompetenceWithResultModel> model,
         CancellationToken ct = default)
     {
-        var chatService = _kernel.GetRequiredService<IChatCompletionService>();
-
-        var chatHistory = new ChatHistory();
-        chatHistory.AddSystemMessage(GetSystemMessage());
-        chatHistory.AddUserMessage(BuildPrompt(model));
-
-        var executionSettings = new OpenAIPromptExecutionSettings
+        try
         {
-            Temperature = _settings.Temperature,
-            ResponseFormat = "json_object"
-        };
+            var chatService = _kernel.GetRequiredService<IChatCompletionService>();
 
-        var response = await chatService.GetChatMessageContentAsync(
-            chatHistory,
-            executionSettings,
-            _kernel,
-            ct);
+            var chatHistory = new ChatHistory();
+            chatHistory.AddSystemMessage(GetSystemMessage());
+            chatHistory.AddUserMessage(BuildPrompt(model));
 
-        var aiResponse = response.Content;
-        if (string.IsNullOrEmpty(aiResponse))
-            return null;
+            var executionSettings = new OpenAIPromptExecutionSettings
+            {
+                Temperature = _settings.Temperature,
+                ResponseFormat = "JSON"
+            };
 
-        var dto = IprDeserialize(aiResponse);
-        if (dto == null)
-            return null;
+            var response = await chatService.GetChatMessageContentAsync(
+                chatHistory,
+                executionSettings,
+                _kernel,
+                ct);
 
-        var recommendationModel = new RecommendationModel()
+            var aiResponse = response.Content;
+            if (string.IsNullOrEmpty(aiResponse))
+                throw new AiInvalidResponseException("AI сервис вернул пустой ответ");
+
+            var dto = RecommendationsDeserialize(aiResponse);
+
+            var recommendationModel = new RecommendationsModel()
+            {
+                RecommendationCompetences = dto.Select(a => a.ToRecommendationsCompetenceModel()).ToList()
+            };
+
+            return recommendationModel;
+        }
+        catch (TaskCanceledException ex)
         {
-            RecommendationCompetences = dto.Select(a => a.ToIprCompetenceModel()).ToList()
-        };
-
-        return recommendationModel;
+            throw new TimeoutException("Превышено время ожидания ответа от AI сервиса", ex);
+        }
+        catch (HttpRequestException ex)
+        {
+            throw new AiTransientException("Ошибка при обращении к AI сервису. ", upstreamBody: ex.Message, inner: ex);
+        }
+        catch (HttpOperationException ex)
+        {
+            throw new HttpRequestException(ex.Message, inner: ex);
+        }
     }
 
-    private static List<IprResultFromAiDto>? IprDeserialize(string aiResponse)
+    private static List<RecommendationsResultFromAiDto> RecommendationsDeserialize(string aiResponse)
     {
         var options = new JsonSerializerOptions
         {
@@ -75,11 +88,20 @@ public class GetPrompt : IAiIprGeneratorService
             AllowTrailingCommas = true
         };
 
-        var resultFromAiDtos = JsonSerializer.Deserialize<List<IprResultFromAiDto>>(aiResponse, options);
-        if (resultFromAiDtos is not null && resultFromAiDtos.Count != 0)
-            return resultFromAiDtos;
+        try
+        {
+            var resultFromAiDtos = JsonSerializer.Deserialize<List<RecommendationsResultFromAiDto>>(aiResponse, options);
+            if (resultFromAiDtos is not null && resultFromAiDtos.Count != 0)
+                return resultFromAiDtos;
 
-        return null;
+            throw new AiInvalidResponseException("Ошибка в формате ответа от AI сервиса", aiResponse);
+        }
+        catch (JsonException je)
+        {
+            throw new AiInvalidResponseException("Ошибка при десериализации ответа от AI сервиса",
+                upstreamBody: aiResponse,
+                inner: je);
+        }
     }
 
     private static string BuildPrompt(List<CompetenceWithResultModel> model)
@@ -109,11 +131,14 @@ public class GetPrompt : IAiIprGeneratorService
         var sb = new StringBuilder();
 
         sb.AppendLine("Ты эксперт в составлении индивидуального плана развития. ");
-        sb.AppendLine("На вход будет подан валидный JSON. Правильно распарсь его. ");
+        sb.AppendLine("На вход будет подан валидный JSON. Правильно распарси его. ");
         sb.AppendLine("Возвращай ТОЛЬКО валидный JSON массив, без дополнительных символов и текста. ");
         sb.AppendLine("где IsPassedThreshold = true - в пункте wayToImproveCompetence надо похвалить ");
         sb.AppendLine("Если IsPassedThreshold = false - напиши способы улучшения (как описано в выходном формате) ");
         sb.AppendLine("Если IsPassedThreshold = null - верни пустым поле wayToImproveCompetence");
+        sb.AppendLine(
+            "Разделитель - §§ - используется только в случае, если нужно выделить несколько пунктов в wayToImproveCompetence. ");
+        sb.AppendLine("В других пунктах не используй разделитель. Где разделить используется - не используй маркеры списков (как и перечисление). ");
         sb.AppendLine("Входной формат для каждой компетенции: " +
                       "[\"competenceName\": \"название компетенции\", " +
                       "\"badCriteria\": [\"Список недостаточно развитых критериев через запятую\"]" +
@@ -121,7 +146,7 @@ public class GetPrompt : IAiIprGeneratorService
         sb.AppendLine("Выходной формат для каждой компетенции: " +
                       "[\"competenceName\": \"название компетенции\", " +
                       "\"competenceReason\": \"объяснение, почему это важно для работы (работа в ИТ сфере)\", " +
-                      "\"wayToImproveCompetence\": \"способы улучшения (самостоятельные) от 1 до 5, сколько сможешь. Разделитель - §§\"]" +
+                      "\"wayToImproveCompetence\": \"способы улучшения (самостоятельные) от 1 до 5, сколько сможешь. \"" +
                       "\"isEvaluated\": \"false - если IsPassedThreshold = null, иначе true\"]");
 
         return sb.ToString();

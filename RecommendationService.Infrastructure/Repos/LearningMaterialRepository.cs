@@ -5,7 +5,7 @@ using RecommendationService.Infrastructure.Db;
 
 namespace RecommendationService.Infrastructure.Repos;
 
-public class LearningMaterialRepository : ILearningMaterialRepository
+public sealed class LearningMaterialRepository : ILearningMaterialRepository
 {
     private readonly RecommendationDbContext _context;
 
@@ -21,10 +21,11 @@ public class LearningMaterialRepository : ILearningMaterialRepository
         if (tags.Count == 0)
             return null;
 
-        var cutoff = DateTime.UtcNow.AddMonths(-1);
+        // Дата месяц назад от текущей даты
+        var cutoff = DateTimeOffset.UtcNow.AddMonths(-1);
 
         var rowMaterials = await _context.LearningMaterials
-            .Where(m => competence == m.CompetenceName && m.Created <= cutoff && tags.Contains(m.Tag.ToString()))
+            .Where(m => competence == m.CompetenceName && m.Created >= cutoff && tags.Contains(m.Tag.ToString()))
             .OrderByDescending(m => m.Created)
             .ToListAsync(ct);
 

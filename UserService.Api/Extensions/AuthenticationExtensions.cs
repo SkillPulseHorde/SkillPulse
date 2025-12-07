@@ -14,7 +14,7 @@ public static class AuthenticationExtensions
                                 ?? configuration["Jwt:SecretKey"]
                                 ?? throw new InvalidOperationException("JWT SecretKey не найден");
         });
-        
+
         return services;
     }
 }

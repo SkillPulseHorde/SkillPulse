@@ -11,13 +11,12 @@ public sealed class DeleteAssessmentCommandHandler(
     IAssessmentRepository assessmentRepository)
     : IRequestHandler<DeleteAssessmentCommand, Result<Guid>>
 {
-
-    public async Task<Result<Guid>> Handle(DeleteAssessmentCommand request, CancellationToken ct)
+public async Task<Result<Guid>> Handle(DeleteAssessmentCommand request, CancellationToken ct)
     {
         var deleted = await assessmentRepository.DeleteAsync(request.AssessmentId, ct);
 
-        return !deleted 
-            ? Result<Guid>.Failure(Error.NotFound("Аттестация не найдена")) 
+        return !deleted
+            ? Result<Guid>.Failure(Error.NotFound("Аттестация не найдена"))
             : Result<Guid>.Success(request.AssessmentId);
     }
 }

@@ -20,7 +20,7 @@ public sealed class GetRefreshTokenCommandHandler : IRequestHandler<GetRefreshTo
     private readonly IUserServiceClient _userServiceClient;
 
     public GetRefreshTokenCommandHandler(
-        IJwtProvider jwtProvider, 
+        IJwtProvider jwtProvider,
         IAuthRepository authRepository,
         IUserServiceClient userServiceClient)
     {
@@ -40,7 +40,7 @@ public sealed class GetRefreshTokenCommandHandler : IRequestHandler<GetRefreshTo
         var userFromUserService = await _userServiceClient.GetUserByIdAsync(user.UserId, ct);
         if (userFromUserService is null)
             return Error.Unauthorized("Пользователь не найден в UserService");
-        
+
         var accessToken = _jwtProvider.GenerateAccessToken(user, userFromUserService.Position);
         var refreshToken = _jwtProvider.GenerateRefreshToken();
 

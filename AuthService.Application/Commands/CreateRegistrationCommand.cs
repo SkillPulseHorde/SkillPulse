@@ -35,7 +35,7 @@ public sealed class CreateRegistrationCommandHandler : IRequestHandler<CreateReg
         var userIdFromUserService = await _userServiceClient.GetUserIdByEmailAsync(request.Email, ct);
         if (userIdFromUserService is null)
             return Result.Failure(Error.NotFound("Пользователя с такой почтой нет в системе"));
-        
+
         var hashedPassword = _passwordHasher.GeneratePasswordHash(request.Password);
 
         var newUser = new User

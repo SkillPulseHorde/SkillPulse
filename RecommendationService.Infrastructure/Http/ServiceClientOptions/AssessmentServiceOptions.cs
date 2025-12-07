@@ -1,6 +1,6 @@
 ﻿namespace RecommendationService.Infrastructure.Http.ServiceClientOptions;
 
-public class AssessmentServiceOptions
+public sealed class AssessmentServiceOptions
 {
     public string BaseUrl { get; init; } = string.Empty;
 

@@ -1,4 +1,5 @@
-﻿using System.Net.Http.Headers;
+﻿using System.Net;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
 using Microsoft.Extensions.Options;
@@ -8,24 +9,25 @@ using System.Text.Json;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
 using RecommendationService.Application.AiServiceAbstract;
+using RecommendationService.Application.Exceptions;
 using RecommendationService.Application.Models;
 using RecommendationService.Infrastructure.AI.Configuration;
 using RecommendationService.Infrastructure.Dto;
 
 namespace RecommendationService.Infrastructure.AI.Services;
 
-public class GigaChatPlanGeneratorService : IAiIprGeneratorService
+public class GigaChatRecommendationsGeneratorService : IAiRecommendationsGeneratorService
 {
     private const int Timeout = 30;
     private const string AuthUrl = "https://ngw.devices.sberbank.ru:9443/api/v2/oauth";
 
-    private readonly IprAiOptions _settings;
+    private readonly RecommendationsAiOptions _settings;
 
     private string? _accessToken;
     private DateTime _tokenExpiration = DateTime.MinValue;
 
-    public GigaChatPlanGeneratorService(
-        IOptions<IprAiOptions> settings)
+    public GigaChatRecommendationsGeneratorService(
+        IOptions<RecommendationsAiOptions> settings)
     {
         _settings = settings.Value;
     }
@@ -33,13 +35,10 @@ public class GigaChatPlanGeneratorService : IAiIprGeneratorService
     /// <summary>
     /// Генерация запроса
     /// </summary>
-    public async Task<RecommendationModel?> GenerateIprAsync(
-        List<CompetenceWithResultModel> model,
+    public async Task<RecommendationsModel> GenerateRecommendationsAsync(List<CompetenceWithResultModel> model,
         CancellationToken ct = default)
     {
         var accessToken = await GetAccessTokenAsync(ct);
-        if (string.IsNullOrEmpty(accessToken))
-            return null;
 
         var kernel = CreateKernelWithToken(accessToken);
         var chatService = kernel.GetRequiredService<IChatCompletionService>();
@@ -53,41 +52,57 @@ public class GigaChatPlanGeneratorService : IAiIprGeneratorService
             Temperature = _settings.Temperature
         };
 
-        var response = await chatService.GetChatMessageContentAsync(
-            chatHistory,
-            executionSettings,
-            kernel,
-            ct);
-
-        var aiResponse = response.Content;
-        if (string.IsNullOrEmpty(aiResponse))
-            return null;
-
-        var dto = IprDeserialize(aiResponse);
-        if (dto == null)
-            return null;
-
-        var recommendationModel = new RecommendationModel()
+        try
         {
-            RecommendationCompetences = dto.Select(a => a.ToIprCompetenceModel()).ToList()
-        };
+            var response = await chatService.GetChatMessageContentAsync(
+                chatHistory,
+                executionSettings,
+                kernel,
+                ct);
 
-        return recommendationModel;
+            var aiResponse = response.Content;
+            if (string.IsNullOrEmpty(aiResponse))
+                throw new AiInvalidResponseException("AI сервис вернул пустой ответ", upstreamBody: aiResponse);
+
+            var dto = RecommendationsDeserialize(aiResponse);
+            if (dto == null)
+                throw new AiInvalidResponseException("AI сервис вернул некорректный ответ", upstreamBody: aiResponse);
+
+            var recommendationModel = new RecommendationsModel()
+            {
+                RecommendationCompetences = dto.Select(a => a.ToRecommendationsCompetenceModel()).ToList()
+            };
+
+            return recommendationModel;
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (TaskCanceledException ex)
+        {
+            throw new TimeoutException("Превышено время ожидания ответа от AI сервиса", ex);
+        }
+        catch (HttpRequestException ex)
+        {
+            throw new AiTransientException("Ошибка при обращении к AI сервису. ", upstreamBody: ex.Message, inner: ex);
+        }
     }
 
     /// <summary>
     /// Получение Access token для GigaChat через OAuth2
     /// </summary>
-    private async Task<string?> GetAccessTokenAsync(CancellationToken ct)
+    private async Task<string> GetAccessTokenAsync(CancellationToken ct)
     {
         if (!string.IsNullOrEmpty(_accessToken) && DateTime.UtcNow < _tokenExpiration)
             return _accessToken;
 
         var httpClient = CreateHttpClientWithCertificate();
         if (httpClient is null)
-            return null;
+            throw new AiTransientException(
+                "Не удалось создать HttpClient с сертификатом для GigaChat (Отсутствует файл сертификата)");
 
-        var request = new HttpRequestMessage(HttpMethod.Post, AuthUrl);
+        using var request = new HttpRequestMessage(HttpMethod.Post, AuthUrl);
 
         request.Headers.Authorization = new AuthenticationHeaderValue("Basic", _settings.ApiKey);
         request.Headers.Add("RqUID", Guid.NewGuid().ToString());
@@ -98,18 +113,54 @@ public class GigaChatPlanGeneratorService : IAiIprGeneratorService
 
         request.Content = content;
 
-        var response = await httpClient.SendAsync(request, ct);
+        using var response = await httpClient.SendAsync(request, ct);
 
-        response.EnsureSuccessStatusCode();
+        if (!response.IsSuccessStatusCode)
+        {
+            if (response.StatusCode == HttpStatusCode.Unauthorized || response.StatusCode == HttpStatusCode.Forbidden)
+            {
+                throw new AiAuthException("Ошибка аутентификации при получении access token от GigaChat. " +
+                                          $"Код ответа: {response.StatusCode}, Тело ответа: {await response.Content.ReadAsStringAsync(ct)}");
+            }
 
-        var tokenResponse = await response.Content.ReadFromJsonAsync<GigaChatTokenResponse>(ct);
+            throw new AiTransientException("Ошибка при получении access token от GigaChat. " +
+                                           $"Код ответа: {response.StatusCode}, Тело ответа: {await response.Content.ReadAsStringAsync(ct)}");
+        }
+
+        GigaChatTokenResponseDto? tokenResponse;
+        try
+        {
+            tokenResponse = await response.Content.ReadFromJsonAsync<GigaChatTokenResponseDto>(ct);
+        }
+        catch (JsonException ex)
+        {
+            throw new AiInvalidResponseException("Ошибка при десериализации ответа с access token от GigaChat",
+                upstreamBody: await response.Content.ReadAsStringAsync(ct),
+                inner: ex);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            throw new AiTransientException("Неожиданная ошибка при получении access token от GigaChat",
+                upstreamBody: await response.Content.ReadAsStringAsync(ct),
+                inner: ex);
+        }
+
         if (tokenResponse is null || string.IsNullOrEmpty(tokenResponse.AccessToken))
-            return null;
+            throw new AiAuthException("Получен некорректный ответ с access token от GigaChat. " +
+                                      $"Тело ответа: {await response.Content.ReadAsStringAsync(ct)}");
 
-        _accessToken = tokenResponse.AccessToken;
-        _tokenExpiration = DateTimeOffset.FromUnixTimeMilliseconds(tokenResponse.ExpiresAt)
-            .UtcDateTime
-            .AddSeconds(-60);
+        try
+        {
+            _accessToken = tokenResponse.AccessToken;
+            _tokenExpiration = DateTimeOffset.FromUnixTimeMilliseconds(tokenResponse.ExpiresAt)
+                .UtcDateTime
+                .AddSeconds(-60);
+        }
+        catch (Exception)
+        {
+            _accessToken = tokenResponse.AccessToken;
+            _tokenExpiration = DateTime.UtcNow.AddMinutes(5);
+        }
 
         return _accessToken;
     }
@@ -117,12 +168,12 @@ public class GigaChatPlanGeneratorService : IAiIprGeneratorService
     /// <summary>
     /// Создает HttpClient с загруженным сертификатом
     /// </summary>
-    private HttpClient? CreateHttpClientWithCertificate()
+    private static HttpClient CreateHttpClientWithCertificate()
     {
         var certPath = Path.Combine(AppContext.BaseDirectory, "AI", "Certificates", "russian_trusted_root_ca.cer");
 
         if (!File.Exists(certPath))
-            return null;
+            throw new AiTransientException("Не удалось найти файл сертификата для GigaChat по пути: " + certPath);
 
         var certificate = X509CertificateLoader.LoadCertificateFromFile(certPath);
 
@@ -167,7 +218,7 @@ public class GigaChatPlanGeneratorService : IAiIprGeneratorService
         return builder.Build();
     }
 
-    private static List<IprResultFromAiDto>? IprDeserialize(string aiResponse)
+    private static List<RecommendationsResultFromAiDto>? RecommendationsDeserialize(string aiResponse)
     {
         var options = new JsonSerializerOptions
         {
@@ -176,11 +227,21 @@ public class GigaChatPlanGeneratorService : IAiIprGeneratorService
             AllowTrailingCommas = true
         };
 
-        var resultFromAiDtos = JsonSerializer.Deserialize<List<IprResultFromAiDto>>(aiResponse, options);
-        if (resultFromAiDtos is not null && resultFromAiDtos.Count != 0)
-            return resultFromAiDtos;
+        try
+        {
+            var resultFromAiDtos =
+                JsonSerializer.Deserialize<List<RecommendationsResultFromAiDto>>(aiResponse, options);
+            if (resultFromAiDtos is not null && resultFromAiDtos.Count != 0)
+                return resultFromAiDtos;
 
-        return null;
+            return null;
+        }
+        catch (JsonException ex)
+        {
+            throw new AiInvalidResponseException("Ошибка при десериализации ответа от AI сервиса",
+                upstreamBody: aiResponse,
+                inner: ex);
+        }
     }
 
     private static string BuildPrompt(List<CompetenceWithResultModel> model)
@@ -210,11 +271,13 @@ public class GigaChatPlanGeneratorService : IAiIprGeneratorService
         var sb = new StringBuilder();
 
         sb.AppendLine("Ты эксперт в составлении индивидуального плана развития. ");
-        sb.AppendLine("На вход будет подан валидный JSON. Правильно распарсь его. ");
+        sb.AppendLine("На вход будет подан валидный JSON. Правильно распарси его. ");
         sb.AppendLine("Возвращай ТОЛЬКО валидный JSON массив, без дополнительных символов и текста. ");
         sb.AppendLine("где IsPassedThreshold = true - в пункте wayToImproveCompetence надо похвалить ");
         sb.AppendLine("Если IsPassedThreshold = false - напиши способы улучшения (как описано в выходном формате) ");
         sb.AppendLine("Если IsPassedThreshold = null - верни пустым поле wayToImproveCompetence");
+        sb.AppendLine(
+            "Разделитель - §§ - используется только в случае, если нужно выделить несколько пунктов в wayToImproveCompetence. ");
         sb.AppendLine("Входной формат для каждой компетенции: " +
                       "[\"competenceName\": \"название компетенции\", " +
                       "\"badCriteria\": [\"Список недостаточно развитых критериев через запятую\"]" +
@@ -222,7 +285,7 @@ public class GigaChatPlanGeneratorService : IAiIprGeneratorService
         sb.AppendLine("Выходной формат для каждой компетенции: " +
                       "[\"competenceName\": \"название компетенции\", " +
                       "\"competenceReason\": \"объяснение, почему это важно для работы (работа в ИТ сфере)\", " +
-                      "\"wayToImproveCompetence\": \"способы улучшения (самостоятельные) от 1 до 5, сколько сможешь. Разделитель - §§\"]" +
+                      "\"wayToImproveCompetence\": \"способы улучшения (самостоятельные) от 1 до 5, сколько сможешь. Разделитель - §§\"" +
                       "\"isEvaluated\": \"false - если IsPassedThreshold = null, иначе true\"]");
 
         return sb.ToString();

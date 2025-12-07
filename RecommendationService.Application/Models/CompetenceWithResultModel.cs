@@ -1,6 +1,4 @@
-﻿using Microsoft.AspNetCore.SignalR.Protocol;
-
-namespace RecommendationService.Application.Models;
+﻿namespace RecommendationService.Application.Models;
 
 public sealed record CompetenceWithResultModel
 {

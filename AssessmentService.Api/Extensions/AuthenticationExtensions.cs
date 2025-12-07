@@ -5,7 +5,7 @@ namespace AssessmentService.Api.Extensions;
 public static class AuthenticationExtensions
 {
     public static IServiceCollection AddAuthenticationConfiguration(
-        this IServiceCollection services, 
+        this IServiceCollection services,
         IConfiguration configuration)
     {
         services.AddJwtAuthentication(options =>

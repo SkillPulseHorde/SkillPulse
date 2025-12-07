@@ -11,18 +11,18 @@ public class AssessmentConfiguration : IEntityTypeConfiguration<Assessment>
         builder.ToTable("Assessments");
 
         builder.HasKey(x => x.Id);
-        
+
         builder.HasMany(x => x.Evaluations)
             .WithOne(x => x.Assessment)
             .OnDelete(DeleteBehavior.Cascade);
-        
+
         builder.HasMany(x => x.Evaluators)
             .WithOne()
             .OnDelete(DeleteBehavior.Cascade);
 
         // Для поиска по оцениваемому пользователю за заданный период
         builder.HasIndex(x => new { x.EvaluateeId, x.StartAt, x.EndsAt });
-        
+
         // Для поиска за заданный период
         builder.HasIndex(x => new { x.StartAt, x.EndsAt });
     }

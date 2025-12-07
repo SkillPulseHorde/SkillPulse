@@ -3,7 +3,7 @@ using RecommendationService.Application.Models;
 
 namespace RecommendationService.Infrastructure.Dto;
 
-public sealed record IprResultFromAiDto
+public sealed record RecommendationsResultFromAiDto
 {
     [JsonPropertyName("competenceName")]
     public required string CompetenceName { get; init; }
@@ -14,9 +14,9 @@ public sealed record IprResultFromAiDto
     [JsonPropertyName("wayToImproveCompetence")]
     public required string WayToImproveCompetence { get; init; }
 
-    public IprCompetenceModel ToIprCompetenceModel()
+    public RecommendationsCompetenceModel ToRecommendationsCompetenceModel()
     {
-        return new IprCompetenceModel
+        return new RecommendationsCompetenceModel
         {
             CompetenceName = CompetenceName,
             CompetenceReason = CompetenceReason,

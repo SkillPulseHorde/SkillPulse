@@ -15,7 +15,7 @@ public class CriterionEvaluationConfiguration : IEntityTypeConfiguration<Criteri
         builder.HasOne<CompetenceEvaluation>()
             .WithMany(ce => ce.CriterionEvaluations)
             .HasForeignKey(x => x.CompetenceEvaluationId);
-        
+
         builder.HasOne<Criterion>()
             .WithMany()
             .HasForeignKey(x => x.CriterionId)

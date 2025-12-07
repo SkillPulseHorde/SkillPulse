@@ -10,9 +10,9 @@ namespace AssessmentService.Application.Commands;
 public sealed record UpdateAssessmentCommand : IRequest<Result<Guid>>
 {
     public required Guid AssessmentId { get; init; }
-    
+
     public required DateTime EndsAt { get; init; }
-    
+
     public required List<Guid> EvaluatorIds { get; init; }
 }
 
@@ -39,14 +39,14 @@ public sealed class UpdateAssessmentCommandHandler(
             return Error.Validation("Дата завершения должна быть позже даты начала аттестации");
 
         assessment.EndsAt = request.EndsAt;
-        
+
         // Проверяем, не началась ли аттестация, если пытаемся изменить список оценщиков
         if (assessment.StartAt <= DateTime.UtcNow)
         {
             // Проверяем, изменился ли список оценщиков
             var existingEvaluatorIds = assessment.Evaluators.Select(e => e.EvaluatorId).OrderBy(id => id).ToList();
             var newEvaluatorIds = request.EvaluatorIds.Distinct().OrderBy(id => id).ToList();
-            
+
             if (!existingEvaluatorIds.SequenceEqual(newEvaluatorIds))
                 return Error.Validation("Нельзя изменить список оценщиков после начала аттестации");
         }
@@ -54,7 +54,7 @@ public sealed class UpdateAssessmentCommandHandler(
         {
             if (request.EvaluatorIds.Contains(assessment.EvaluateeId))
                 return Error.Validation("Оцениваемый пользователь не может быть оценщиком в своей аттестации");
-            
+
             assessment.Evaluators.Clear();
             foreach (var evaluatorId in request.EvaluatorIds.Distinct())
             {
@@ -64,10 +64,10 @@ public sealed class UpdateAssessmentCommandHandler(
                     EvaluatorId = evaluatorId
                 });
             }
-            
+
             // Обновляем список оценщиков глобально для пользователя
             await userEvaluatorRepository.UpdateEvaluatorsForUserAsync(
-                assessment.EvaluateeId, 
+                assessment.EvaluateeId,
                 request.EvaluatorIds.Distinct().ToList(),
                 ct);
         }

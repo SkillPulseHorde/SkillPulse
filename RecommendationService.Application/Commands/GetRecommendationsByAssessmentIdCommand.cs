@@ -5,34 +5,33 @@ using RecommendationService.Application.Models;
 using RecommendationService.Application.ServiceClientsAbstract;
 using RecommendationService.Domain.Entities;
 using RecommendationService.Domain.Repos;
-using RecommendationService.Domain.ValueObjects;
 
 namespace RecommendationService.Application.Commands;
 
-public sealed record GetRecommendationsByUserIdCommand : IRequest<Result<RecommendationModel?>>
+public sealed record GetRecommendationsByAssessmentIdCommand : IRequest<Result<RecommendationsModel?>>
 {
     public required Guid UserId { get; init; }
 
     public required Guid AssessmentId { get; init; }
 }
 
-public sealed class GetRecommendationsByUserIdCommandHandler(
+public sealed class GetRecommendationsByAssessmentIdCommandHandler(
     IIndividualDevelopmentPlanRepository planRepository,
     IThresholdValueRepository thresholdValueRepository,
     ILearningMaterialRepository materialRepository,
-    IAiLearningMaterialSearchService aiMaterialSearchService,
-    IAiIprGeneratorService aiPlanGeneratorService,
+    IALearningMaterialsSearchService aiMaterialSearchService,
+    IAiRecommendationsGeneratorService aiPlanGeneratorService,
     IUserServiceClient userServiceClient,
     IAssessmentServiceClient assessmentServiceClient)
-    : IRequestHandler<GetRecommendationsByUserIdCommand, Result<RecommendationModel?>>
+    : IRequestHandler<GetRecommendationsByAssessmentIdCommand, Result<RecommendationsModel?>>
 {
-    public async Task<Result<RecommendationModel?>> Handle(
-        GetRecommendationsByUserIdCommand request,
+    public async Task<Result<RecommendationsModel?>> Handle(
+        GetRecommendationsByAssessmentIdCommand request,
         CancellationToken ct)
     {
-        var ipr = await planRepository.GetByAssessmentIdAsync(request.AssessmentId, ct);
-        if (ipr is not null)
-             return RecommendationModel.Deserialize(ipr.SummaryJson);
+        var recommendations = await planRepository.GetByAssessmentIdAsync(request.AssessmentId, ct);
+        if (recommendations is not null)
+            return RecommendationsModel.Deserialize(recommendations.SummaryJson);
 
         var user = await userServiceClient.GetUserByIdAsync(request.UserId, ct);
         if (user == null)
@@ -52,25 +51,40 @@ public sealed class GetRecommendationsByUserIdCommandHandler(
 
         var competenceResult = BuildCompetenceResults(assessmentResult, competenceDefinitions, threshold);
 
-        var recommendation = new RecommendationModel();
-        for (var i = 1; recommendation == null && i < 3; i++)
+        RecommendationsModel recommendation;
+        try
         {
-            recommendation = await aiPlanGeneratorService.GenerateIprAsync(competenceResult, ct);
+            recommendation = await aiPlanGeneratorService.GenerateRecommendationsAsync(competenceResult, ct);
         }
-        if (recommendation == null)
-            return Error.Conflict("Не удалось сгенерировать план развития");
+        catch (Exception ex)
+        {
+            var error = ExceptionToErrorMapper.Map(ex);
+            return error;
+        }
 
         var learningMaterialTags = Enum.GetNames<LearningMaterialTag>().ToList();
 
-        foreach (var iprCompetenceModel in recommendation.RecommendationCompetences)
-        {
-            var competenceName = iprCompetenceModel.CompetenceName;
-            var learningMaterials =
-                await materialRepository.GetByCompetenceAsync(competenceName, learningMaterialTags, ct);
+        var isCompetencePassedByName = competenceResult.ToDictionary(x => x.CompetenceName, x => x.IsPassedThreshold);
 
-            if (learningMaterials != null)
+        var filteredCompetences = recommendation.RecommendationCompetences
+            .Where(rc => rc.IsEvaluated
+                         && !(isCompetencePassedByName.TryGetValue(rc.CompetenceName, out var isPassedThreshold) &&
+                              isPassedThreshold == true));
+
+        foreach (var recommendationsCompetenceModel in filteredCompetences)
+        {
+            if (!recommendationsCompetenceModel.IsEvaluated ||
+                (isCompetencePassedByName.TryGetValue(recommendationsCompetenceModel.CompetenceName, out var value) &&
+                 value == true))
+                continue;
+
+            var competenceName = recommendationsCompetenceModel.CompetenceName;
+
+            var dbMaterials =
+                await materialRepository.GetByCompetenceAsync(competenceName, learningMaterialTags, ct);
+            if (dbMaterials != null && dbMaterials.Count != 0)
             {
-                iprCompetenceModel.LearningMaterials = learningMaterials
+                recommendationsCompetenceModel.LearningMaterials = dbMaterials
                     .Select(m => new LearningMaterialModel
                     {
                         LearningMaterialName = m.Title,
@@ -78,14 +92,26 @@ public sealed class GetRecommendationsByUserIdCommandHandler(
                         LearningMaterialUrl = m.Url ?? string.Empty
                     })
                     .ToList();
+                continue;
             }
 
-            var learningMaterialsAi =
-                await aiMaterialSearchService.SearchLearningMaterialsAsync(competenceName, learningMaterialTags, ct);
-            if (learningMaterialsAi == null)
-                return new Result<RecommendationModel?>();
+            List<LearningMaterialModel> learningMaterialsAi;
+            try
+            {
+                learningMaterialsAi =
+                    await aiMaterialSearchService.SearchLearningMaterialsAsync(competenceName, learningMaterialTags,
+                        ct);
+            }
+            catch (Exception ex)
+            {
+                var error = ExceptionToErrorMapper.Map(ex);
+                return error;
+            }
 
-            iprCompetenceModel.LearningMaterials = learningMaterialsAi;
+            if (learningMaterialsAi.Count == 0)
+                continue;
+
+            recommendationsCompetenceModel.LearningMaterials = learningMaterialsAi;
             var materialsToSave = learningMaterialsAi
                 .Select(m => new LearningMaterial
                 {
@@ -97,7 +123,9 @@ public sealed class GetRecommendationsByUserIdCommandHandler(
                     Created = DateTimeOffset.UtcNow
                 })
                 .ToList();
-            await materialRepository.AddRangeAsync(materialsToSave, ct);
+
+            if (materialsToSave.Count != 0)
+                await materialRepository.AddRangeAsync(materialsToSave, ct);
         }
 
         await planRepository.CreateAsync(new IndividualDevelopmentPlan
@@ -140,13 +168,17 @@ public sealed class GetRecommendationsByUserIdCommandHandler(
                 }
             }
 
+            var areAllCriteriaPassed = criterionResult.All(c => c.IsPassedThreshold);
+
             results.Add(new CompetenceWithResultModel
             {
                 CompetenceName = competenceInfo.Name,
                 CompetenceAvgScore = competence?.AverageScore,
-                IsPassedThreshold = competence is not null
-                    ? competence.AverageScore >= thresholdValue.MinAvgCompetence
-                    : null,
+                IsPassedThreshold = !areAllCriteriaPassed
+                    ? false
+                    : competence is not null
+                        ? competence.AverageScore >= thresholdValue.MinAvgCompetence
+                        : null,
                 Criteria = criterionResult
             });
         }

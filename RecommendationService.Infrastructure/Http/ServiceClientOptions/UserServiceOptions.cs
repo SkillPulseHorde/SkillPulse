@@ -1,6 +1,6 @@
 ﻿namespace RecommendationService.Infrastructure.Http.ServiceClientOptions;
 
-public class UserServiceOptions
+public sealed class UserServiceOptions
 {
     public string BaseUrl { get; init; } = string.Empty;
 

@@ -13,7 +13,7 @@ public sealed class EvaluationRepository : IEvaluationRepository
     {
         _dbContext = dbContext;
     }
-    
+
     /// <summary>
     /// Получить оценки по Id аттестации
     /// </summary>

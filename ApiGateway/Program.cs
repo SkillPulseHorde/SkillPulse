@@ -3,11 +3,11 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddReverseProxy()
     .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
 
-builder.Services.AddCors(option  =>
+builder.Services.AddCors(option =>
 {
     option.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:4200", "https://localhost:4200", "null") // TODO: Не забыть убрать null, он для проверки
+        policy.WithOrigins("http://localhost:4200", "https://localhost:4200")
             .AllowCredentials()
             .AllowAnyHeader()
             .AllowAnyMethod();

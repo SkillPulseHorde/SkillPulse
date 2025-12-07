@@ -19,13 +19,13 @@ public static class UserServiceRegistration
             .Validate(options => !string.IsNullOrWhiteSpace(options.InternalToken),
                 "InternalToken должен быть передан")
             .ValidateOnStart();
-        
+
         services.AddHttpClient<IUserServiceClient, UserServiceClient>((sp, client) =>
         {
             var options = sp.GetRequiredService<IOptions<UserServiceOptions>>().Value;
             client.BaseAddress = new Uri(options.BaseUrl);
         });
-        
+
         return services;
     }
 }

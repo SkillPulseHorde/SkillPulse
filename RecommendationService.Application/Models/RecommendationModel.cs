@@ -1,13 +1,13 @@
 ﻿namespace RecommendationService.Application.Models;
 
-public sealed record RecommendationModel
+public sealed record RecommendationsModel
 {
-    public List<IprCompetenceModel> RecommendationCompetences { get; set; } = [];
+    public List<RecommendationsCompetenceModel> RecommendationCompetences { get; set; } = [];
 
-    public static RecommendationModel Deserialize(string json)
+    public static RecommendationsModel Deserialize(string json)
     {
-        return System.Text.Json.JsonSerializer.Deserialize<RecommendationModel>(json)
-               ?? new RecommendationModel();
+        return System.Text.Json.JsonSerializer.Deserialize<RecommendationsModel>(json)
+               ?? new RecommendationsModel();
     }
 
     public string Serialize()
@@ -16,7 +16,7 @@ public sealed record RecommendationModel
     }
 }
 
-public sealed record IprCompetenceModel
+public sealed record RecommendationsCompetenceModel
 {
     public required string CompetenceName { get; set; } = string.Empty;
 
@@ -27,14 +27,13 @@ public sealed record IprCompetenceModel
     public List<LearningMaterialModel> LearningMaterials { get; set; } = [];
 
     public bool IsEvaluated { get; set; } = true;
-
 }
 
 public sealed record LearningMaterialModel
 {
     public string LearningMaterialName { get; set; } = string.Empty;
-    
+
     public string LearningMaterialUrl { get; set; } = string.Empty;
-    
+
     public string LearningMaterialType { get; set; } = string.Empty;
 }

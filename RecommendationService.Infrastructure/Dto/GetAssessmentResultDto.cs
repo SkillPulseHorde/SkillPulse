@@ -12,7 +12,7 @@ public sealed record GetAssessmentResultDto(
             kvp => kvp.Value is null
                 ? null
                 : new CompetenceSummary(
-                    kvp.Value. AverageCompetenceScore,
+                    kvp.Value.AverageCompetenceScore,
                     kvp.Value.CriterionSummaries.ToDictionary(
                         c => c.Key,
                         c => new CriterionSummary(

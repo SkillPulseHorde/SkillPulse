@@ -10,6 +10,6 @@ public class JwtAuthOptions
     public bool ValidateIssuer { get; init; } = false;
 
     public bool ValidateAudience { get; init; } = false;
-    
+
     public TimeSpan ClockSkew { get; init; } = TimeSpan.Zero;
 }

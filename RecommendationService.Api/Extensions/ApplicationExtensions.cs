@@ -8,14 +8,10 @@ public static class ApplicationExtensions
     public static IServiceCollection AddApplication(
         this IServiceCollection services)
     {
-        // FluentValidation
-        //services.AddValidatorsFromAssemblyContaining<CreateRegistrationCommand>();
-
         // MediatR
         services.AddMediatR(cfg =>
         {
-            cfg.RegisterServicesFromAssemblies(typeof(GetRecommendationsByUserIdCommand).Assembly);
-            //cfg.AddOpenBehavior(typeof(ValidationBehavior<,>));
+            cfg.RegisterServicesFromAssemblies(typeof(GetRecommendationsByAssessmentIdCommand).Assembly);
         });
 
         services.ConfigureHttpJsonOptions(options =>

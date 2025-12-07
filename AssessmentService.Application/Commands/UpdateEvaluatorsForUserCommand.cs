@@ -22,7 +22,7 @@ public sealed class UpdateEvaluatorsForUserCommandHandler(
         var allUserIdsToCheck = request.EvaluatorIds
             .Append(request.UserId)
             .ToList();
-        
+
         // существуют ли рецензенты и текущий пользователь
         var areUsersExist = await userServiceClient.AreUsersExistAsync(allUserIdsToCheck, cancellationToken);
         if (!areUsersExist)

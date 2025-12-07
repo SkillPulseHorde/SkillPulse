@@ -13,7 +13,7 @@ public static class SwaggerExtensions
             {
                 Title = "RecommendationService API",
                 Version = "v1",
-                Description = "API для управления рекомендациями"
+                Description = "API для получения рекомендаций"
             });
 
             options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme

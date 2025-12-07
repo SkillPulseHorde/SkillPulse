@@ -8,12 +8,12 @@ public class Result
     public Error? Error { get; private set; }
 
     // Для фабрики
-    public Result()
+    protected Result()
     {
         IsSuccess = true;
         Error = null;
     }
-    
+
     protected Result(bool isSuccess, Error? error)
     {
         IsSuccess = isSuccess;
@@ -27,24 +27,24 @@ public class Result
     {
         return new TResult
         {
-            IsSuccess = false, 
+            IsSuccess = false,
             Error = error
         };
     }
 }
 
-public class Result<T> : Result
+public sealed class Result<T> : Result
 {
     public T? Value { get; set; }
 
     [System.Diagnostics.CodeAnalysis.MemberNotNullWhen(true, nameof(Value))]
     public new bool IsSuccess => base.IsSuccess;
 
-    public Result() : base()
+    public Result()
     {
         Value = default;
     }
-    
+
     private Result(T value) : base(true, null)
     {
         Value = value;
@@ -57,7 +57,7 @@ public class Result<T> : Result
 
     public static Result<T> Success(T value) => new(value);
     public new static Result<T> Failure(Error error) => new(error);
-    
+
     public static implicit operator Result<T>(T value) =>
         Success(value);
 

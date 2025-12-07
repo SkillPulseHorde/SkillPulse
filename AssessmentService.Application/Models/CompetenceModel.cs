@@ -11,6 +11,6 @@ public sealed record CriterionModel
 {
     public Guid Id { get; set; }
     public required string Name { get; set; }
-    
+
     public required bool IsMandatory { get; set; }
 }

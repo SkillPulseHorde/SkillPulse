@@ -106,13 +106,13 @@
       #- ASPNETCORE_ENVIRONMENT=Development
       - Services__UserService__InternalToken=${INTERNAL_TOKEN}
       - Services__AssessmentService__InternalToken=${INTERNAL_TOKEN}
-      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
-      - AI__IPR__ApiKey=${AI_IPR_API_KEY}
-      - AI__IPR__BaseUrl=${AI_IPR_BASE_URL}
-      - AI__IPR__Model=${AI_IPR_MODEL}
-      - AI__LearningMaterial__ApiKey=${AI_LearningMaterial_API_KEY}
-      - AI__LearningMaterial__BaseUrl=${AI_LearningMaterial_BASE_URL}
-      - AI__LearningMaterial__Model=${AI_LearningMaterial_MODEL}
+      - Jwt__SecretKey=${JWT_SECRET_KEY}
+      - AI__Recommendations__ApiKey=${AI_Recommendations_API_KEY}
+      - AI__Recommendations__BaseUrl=${AI_Recommendations_BASE_URL}
+      - AI__Recommendations__Model=${AI_Recommendations_MODEL}
+      - AI__LearningMaterials__ApiKey=${AI_LearningMaterials_API_KEY}
+      - AI__LearningMaterials__BaseUrl=${AI_LearningMaterials_BASE_URL}
+      - AI__LearningMaterials__Model=${AI_LearningMaterials_MODEL}
       - ConnectionStrings__RecommendationDb=Host=recommendation-postgres;Port=5432;Database=recommendations;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
     depends_on:
       - recommendation-postgres

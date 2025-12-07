@@ -23,7 +23,7 @@ public static class UserShortInfoDtoExtensions
             user.TeamName ?? string.Empty,
             user.Position,
             user.Grade);
-    
+
     public static UserShortInfoDto ToDto(this UserModel userModel) =>
         new(
             userModel.Id,

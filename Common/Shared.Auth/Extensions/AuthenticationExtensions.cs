@@ -16,13 +16,13 @@ public static class AuthenticationExtensions
             .AddOptions<JwtAuthOptions>()
             .Configure(configureOptions)
             .ValidateDataAnnotations()
-            .Validate(options => Encoding.UTF8.GetByteCount(options.SecretKey) >= 32, 
+            .Validate(options => Encoding.UTF8.GetByteCount(options.SecretKey) >= 32,
                 "JWT SecretKey должен быть минимум 32 байта")
             .ValidateOnStart();
 
         var jwtOptions = new JwtAuthOptions();
         configureOptions(jwtOptions);
-        
+
         services
             .AddAuthentication(options =>
             {

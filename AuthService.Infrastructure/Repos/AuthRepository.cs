@@ -13,13 +13,13 @@ public class AuthRepository : IAuthRepository
     {
         _dbContext = authDbContext;
     }
-    
+
     public async Task CreateRegistrationAsync(User user, CancellationToken ct = default)
     {
         await _dbContext.Users.AddAsync(user, ct);
         await _dbContext.SaveChangesAsync(ct);
     }
-    
+
     public async Task<User?> GetUserByEmailReadOnlyAsync(string email, CancellationToken ct = default)
     {
         return await _dbContext.Users
@@ -32,10 +32,10 @@ public class AuthRepository : IAuthRepository
         var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.UserId == updatedUser.UserId, ct);
         if (user == null)
             throw new InvalidOperationException($"User({updatedUser.UserId}) не найден");
-        
+
         user.RefreshToken = updatedUser.RefreshToken;
         user.RefreshTokenExpiryTime = updatedUser.RefreshTokenExpiryTime;
-        
+
         await _dbContext.SaveChangesAsync(ct);
     }
 

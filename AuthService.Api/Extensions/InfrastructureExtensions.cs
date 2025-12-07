@@ -18,7 +18,7 @@ public static class InfrastructureExtensions
         // База данных
         services.AddDbContext<AuthDbContext>(options =>
             options.UseNpgsql(configuration.GetConnectionString("AuthDb")));
-        
+
         // Репозитории
         services.AddScoped<IAuthRepository, AuthRepository>();
 

@@ -12,12 +12,12 @@ namespace AuthService.Infrastructure;
 public class JwtProvider : IJwtProvider
 {
     private readonly JwtOptions _jwtOptions;
-    
+
     public JwtProvider(IOptions<JwtOptions> jwtOptions)
     {
         _jwtOptions = jwtOptions.Value;
     }
-    
+
     public string GenerateAccessToken(User user, string role)
     {
         Claim[] claims =
@@ -25,7 +25,7 @@ public class JwtProvider : IJwtProvider
             new(ClaimTypes.NameIdentifier, user.UserId.ToString()),
             new(ClaimsIdentity.DefaultRoleClaimType, role)
         ];
-        
+
         var signingCredentials = new SigningCredentials(
             new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOptions.SecretKey)),
             SecurityAlgorithms.HmacSha256);
@@ -34,9 +34,9 @@ public class JwtProvider : IJwtProvider
             signingCredentials: signingCredentials,
             expires: DateTime.UtcNow.AddMinutes(_jwtOptions.AccessExpiresMinutes),
             claims: claims);
-        
+
         var tokenValue = new JwtSecurityTokenHandler().WriteToken(token);
-        
+
         return tokenValue;
     }
 

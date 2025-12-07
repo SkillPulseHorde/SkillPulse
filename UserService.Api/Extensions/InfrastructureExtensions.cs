@@ -14,7 +14,7 @@ public static class InfrastructureExtensions
         // База данных
         services.AddDbContext<UserDbContext>(options =>
             options.UseNpgsql(configuration.GetConnectionString("UserDb")));
-        
+
         // Репозитории
         services.AddScoped<IUserRepository, UserRepository>();
 

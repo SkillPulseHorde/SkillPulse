@@ -1,6 +1,6 @@
 ﻿namespace RecommendationService.Infrastructure.AI.Configuration;
 
-public sealed record IprAiOptions
+public sealed record RecommendationsAiOptions
 {
     public required string ApiKey { get; set; }
 

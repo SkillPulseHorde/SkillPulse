@@ -18,15 +18,15 @@ public static class ApplicationExtensions
             cfg.RegisterServicesFromAssemblies(typeof(CreateAssessmentCommandHandler).Assembly);
             cfg.AddOpenBehavior(typeof(ValidationBehavior<,>));
         });
-        
+
         // FluentValidation
         services.AddValidatorsFromAssemblyContaining<CreateAssessmentCommand>();
-        
+
         services.ConfigureHttpJsonOptions(options =>
         {
             options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
         });
-        
+
         // Inner services
         services.AddScoped<IEvaluationAnalyzer, EvaluationAnalyzer>();
 

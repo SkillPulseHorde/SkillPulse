@@ -9,8 +9,8 @@ public static class Logout
     public static IEndpointRouteBuilder MapLogoutEndpoint(this IEndpointRouteBuilder app)
     {
         app.MapPost("/api/auth/logout", async (
-                HttpContext httpContext, 
-                IMediator mediator, 
+                HttpContext httpContext,
+                IMediator mediator,
                 CancellationToken ct) =>
             {
                 var userId = httpContext.User.GetUserId();

@@ -6,7 +6,7 @@ namespace Common.Middleware;
 public class DevelopmentAuthenticationMiddleware
 {
     private readonly RequestDelegate _next;
-    
+
     private const string DevUserId = "55555555-5555-5555-5555-555555555001";
     private const string DevUserRole = "HR";
 

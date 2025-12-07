@@ -146,11 +146,11 @@ public class EvaluationAnalyzerTests
         // Assert
         Assert.NotNull(result);
         Assert.Single(result.Data.CompetenceSummaries);
-        
+
         var competenceSummary = result.Data.CompetenceSummaries[competenceId];
         Assert.NotNull(competenceSummary);
         const double expectedScore = (double)(8 + 6) / 2;
-        Assert.Equal(expectedScore, competenceSummary.AverageScore); 
+        Assert.Equal(expectedScore, competenceSummary.AverageScore);
         Assert.Equal(2, competenceSummary.CriterionSummaries.Count);
         Assert.Single(competenceSummary.Comments);
         Assert.Equal("Good work", competenceSummary.Comments[0]);
@@ -438,7 +438,7 @@ public class EvaluationAnalyzerTests
         Assert.NotNull(result);
         var competenceSummary = result.Data.CompetenceSummaries[competenceId];
         Assert.NotNull(competenceSummary);
-        
+
         // Только criterion1 должен быть в результате, так как у criterion2 нет оценки
         Assert.Single(competenceSummary.CriterionSummaries);
         Assert.True(competenceSummary.CriterionSummaries.ContainsKey(criterion1Id));
@@ -680,12 +680,12 @@ public class EvaluationAnalyzerTests
         Assert.NotNull(result);
         var competenceSummary = result.Data.CompetenceSummaries[competenceId];
         Assert.NotNull(competenceSummary);
-        
+
         // Проверяем комментарии к компетенции
         Assert.Equal(2, competenceSummary.Comments.Count);
         Assert.Contains("First competence comment", competenceSummary.Comments);
         Assert.Contains("Second competence comment", competenceSummary.Comments);
-        
+
         // Проверяем комментарии к критерию
         var criterionSummary = competenceSummary.CriterionSummaries[criterionId];
         Assert.Equal(2, criterionSummary.Comments.Count);
@@ -757,9 +757,9 @@ public class EvaluationAnalyzerTests
         Assert.NotNull(result);
         var competenceSummary = result.Data.CompetenceSummaries[competenceId];
         Assert.NotNull(competenceSummary);
-        
+
         Assert.Empty(competenceSummary.Comments);
-        
+
         var criterionSummary = competenceSummary.CriterionSummaries[criterionId];
         Assert.Empty(criterionSummary.Comments);
     }
@@ -948,7 +948,7 @@ public class EvaluationAnalyzerTests
         _assessmentResultRepositoryMock
             .Setup(x => x.CreateAsync(It.IsAny<AssessmentResult>(), CancellationToken.None))
             .ReturnsAsync(Guid.NewGuid());
-        
+
         // Competence 1: оба оценщика оценили -> (8 + 6) / 2 = 7.0
         const double competence1Expected = 7.0;
         // Competence 2: только первый оценщик оценил -> 7.0
@@ -973,11 +973,11 @@ public class EvaluationAnalyzerTests
         Assert.Equal(competence1Expected, competence1CriterionSummary.Score, precision: 10);
         Assert.Equal(2, competence1CriterionSummary.Comments.Count);
 
-        // Проверяем Competence 2 - учитывается только первый оценщик 
+        // Проверяем Competence 2 - учитывается только первый оценщик
         var competence2Summary = result.Data.CompetenceSummaries[competence2Id];
         Assert.NotNull(competence2Summary);
         Assert.Equal(competence2Expected, competence2Summary.AverageScore, precision: 10);
-        // Только комментарий от первого оценщика, второй не учитывается 
+        // Только комментарий от первого оценщика, второй не учитывается
         Assert.Single(competence2Summary.Comments);
         Assert.Contains("Evaluator 1 feedback on competence 2", competence2Summary.Comments);
         Assert.DoesNotContain("Evaluator 2 did not evaluate competence 2", competence2Summary.Comments);

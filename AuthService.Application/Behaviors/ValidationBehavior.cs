@@ -33,7 +33,7 @@ public sealed class ValidationBehavior<TRequest, TResponse> : IPipelineBehavior<
             .SelectMany(r => r.Errors)
             .ToList();
 
-        if (failures.Count == 0) 
+        if (failures.Count == 0)
             return await next(ct);
 
         var errorsByField = failures
@@ -43,7 +43,7 @@ public sealed class ValidationBehavior<TRequest, TResponse> : IPipelineBehavior<
                 g => g.Select(e => e.ErrorMessage).ToArray());
 
         var error = Error.Validation(errorsByField);
-        
+
         return Result.Failure<TResponse>(error);
     }
 }

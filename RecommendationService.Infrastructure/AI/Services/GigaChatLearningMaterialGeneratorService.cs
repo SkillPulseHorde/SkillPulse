@@ -1,4 +1,5 @@
-﻿using System.Net.Http.Headers;
+﻿using System.Net;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
 using Microsoft.Extensions.Options;
@@ -8,24 +9,25 @@ using System.Text.Json;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
 using RecommendationService.Application.AiServiceAbstract;
+using RecommendationService.Application.Exceptions;
 using RecommendationService.Application.Models;
 using RecommendationService.Infrastructure.AI.Configuration;
 using RecommendationService.Infrastructure.Dto;
 
 namespace RecommendationService.Infrastructure.AI.Services;
 
-public sealed class GigaChatLearningMaterialGeneratorService : IAiLearningMaterialSearchService
+public class GigaChatLearningMaterialGeneratorService : IALearningMaterialsSearchService
 {
     private const int Timeout = 30;
     private const string AuthUrl = "https://ngw.devices.sberbank.ru:9443/api/v2/oauth";
 
-    private readonly LearningMaterialAiOptions _settings;
+    private readonly LearningMaterialsAiOptions _settings;
 
     private string? _accessToken;
     private DateTime _tokenExpiration = DateTime.MinValue;
 
     public GigaChatLearningMaterialGeneratorService(
-        IOptions<LearningMaterialAiOptions> settings)
+        IOptions<LearningMaterialsAiOptions> settings)
     {
         _settings = settings.Value;
     }
@@ -33,14 +35,11 @@ public sealed class GigaChatLearningMaterialGeneratorService : IAiLearningMateri
     /// <summary>
     /// Генерация запроса
     /// </summary>
-    public async Task<List<LearningMaterialModel>?> SearchLearningMaterialsAsync(
-        string competence,
+    public async Task<List<LearningMaterialModel>> SearchLearningMaterialsAsync(string competence,
         List<string> tags,
         CancellationToken ct = default)
     {
         var accessToken = await GetAccessTokenAsync(ct);
-        if (string.IsNullOrEmpty(accessToken))
-            return null;
 
         var kernel = CreateKernelWithToken(accessToken);
         var chatService = kernel.GetRequiredService<IChatCompletionService>();
@@ -54,26 +53,53 @@ public sealed class GigaChatLearningMaterialGeneratorService : IAiLearningMateri
             Temperature = _settings.Temperature
         };
 
-        var response = await chatService.GetChatMessageContentAsync(
-            chatHistory,
-            executionSettings,
-            kernel,
-            ct);
-        var aiResponseJson = response.Content;
-        if (string.IsNullOrEmpty(aiResponseJson))
-            return null;
+        try
+        {
+            var response = await chatService.GetChatMessageContentAsync(
+                chatHistory,
+                executionSettings,
+                kernel,
+                ct);
 
-        var dto = LearningMaterialDeserialize(aiResponseJson);
+            var aiResponseJson = response.Content;
+            if (string.IsNullOrWhiteSpace(aiResponseJson))
+                throw new AiInvalidResponseException("AI вернула пустой ответ", upstreamBody: aiResponseJson);
 
-        var materials = dto?.Select(resultFromAiDto =>
-            new LearningMaterialModel()
-            {
-                LearningMaterialName = resultFromAiDto.Title,
-                LearningMaterialType = resultFromAiDto.Type ?? string.Empty,
-                LearningMaterialUrl = resultFromAiDto.Link ?? string.Empty,
-            }).ToList();
+            var dto = LearningMaterialDeserialize(aiResponseJson);
 
-        return materials;
+            if (dto is null || dto.Count == 0)
+                return [];
+
+            var materials = dto.Select(resultFromAiDto =>
+                new LearningMaterialModel()
+                {
+                    LearningMaterialName = resultFromAiDto.Title,
+                    LearningMaterialType = resultFromAiDto.Type ?? string.Empty,
+                    LearningMaterialUrl = resultFromAiDto.Link ?? string.Empty,
+                }).ToList();
+
+            return materials;
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (TaskCanceledException ex)
+        {
+            throw new TimeoutException("Превышено время ожидания ответа от AI сервиса", ex);
+        }
+        catch (HttpRequestException ex)
+        {
+            throw new AiTransientException("Ошибка при вызове AI сервиса",
+                upstreamBody: ex.Message,
+                inner: ex);
+        }
+        catch (JsonException ex)
+        {
+            throw new AiInvalidResponseException("Ошибка при разборе ответа от AI сервиса",
+                upstreamBody: ex.Message,
+                inner: ex);
+        }
     }
 
     private static List<MaterialSearchResultFromAiDto>? LearningMaterialDeserialize(string aiResponse)
@@ -95,16 +121,17 @@ public sealed class GigaChatLearningMaterialGeneratorService : IAiLearningMateri
     /// <summary>
     /// Получение Access token для GigaChat через OAuth2
     /// </summary>
-    private async Task<string?> GetAccessTokenAsync(CancellationToken ct)
+    private async Task<string> GetAccessTokenAsync(CancellationToken ct)
     {
         if (!string.IsNullOrEmpty(_accessToken) && DateTime.UtcNow < _tokenExpiration)
             return _accessToken;
 
         var httpClient = CreateHttpClientWithCertificate();
         if (httpClient is null)
-            return null;
+            throw new AiTransientException(
+                "Не удалось создать HttpClient с сертификатом для GigaChat (файл отсутствует)");
 
-        var request = new HttpRequestMessage(HttpMethod.Post, AuthUrl);
+        using var request = new HttpRequestMessage(HttpMethod.Post, AuthUrl);
 
         request.Headers.Authorization = new AuthenticationHeaderValue("Basic", _settings.ApiKey);
         request.Headers.Add("RqUID", Guid.NewGuid().ToString());
@@ -115,18 +142,66 @@ public sealed class GigaChatLearningMaterialGeneratorService : IAiLearningMateri
 
         request.Content = content;
 
-        var response = await httpClient.SendAsync(request, ct);
+        HttpResponseMessage response;
+        try
+        {
+            response = await httpClient.SendAsync(request, ct);
+        }
+        catch (TaskCanceledException ex) when (!ct.IsCancellationRequested)
+        {
+            throw new TimeoutException("Превышено время ожидания ответа от сервиса авторизации GigaChat", ex);
+        }
+        catch (HttpRequestException ex)
+        {
+            throw new AiTransientException("Ошибка при вызове сервиса авторизации GigaChat",
+                upstreamBody: ex.Message,
+                inner: ex);
+        }
 
-        response.EnsureSuccessStatusCode();
+        if (!response.IsSuccessStatusCode)
+        {
+            if (response.StatusCode == HttpStatusCode.Unauthorized || response.StatusCode == HttpStatusCode.Forbidden)
+                throw new AiAuthException("Ошибка авторизации при получении токена GigaChat",
+                    upstreamBody: await response.Content.ReadAsStringAsync(ct));
 
-        var tokenResponse = await response.Content.ReadFromJsonAsync<GigaChatTokenResponse>(ct);
+            throw new AiTransientException("Ошибка при получении токена GigaChat",
+                upstreamBody: await response.Content.ReadAsStringAsync(ct));
+        }
+
+        GigaChatTokenResponseDto? tokenResponse;
+        try
+        {
+            tokenResponse = await response.Content.ReadFromJsonAsync<GigaChatTokenResponseDto>(ct);
+        }
+        catch (JsonException ex)
+        {
+            throw new AiInvalidResponseException("Ошибка при разборе ответа от сервиса авторизации GigaChat",
+                upstreamBody: await response.Content.ReadAsStringAsync(ct),
+                inner: ex);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            throw new AiTransientException("Ошибка при получении токена GigaChat",
+                upstreamBody: await response.Content.ReadAsStringAsync(ct),
+                inner: ex);
+        }
+
         if (tokenResponse is null || string.IsNullOrEmpty(tokenResponse.AccessToken))
-            return null;
+            throw new AiAuthException("Ошибка авторизации при получении токена GigaChat: пустой токен",
+                upstreamBody: await response.Content.ReadAsStringAsync(ct));
 
-        _accessToken = tokenResponse.AccessToken;
-        _tokenExpiration = DateTimeOffset.FromUnixTimeMilliseconds(tokenResponse.ExpiresAt)
-            .UtcDateTime
-            .AddSeconds(-60);
+        try
+        {
+            _accessToken = tokenResponse.AccessToken;
+            _tokenExpiration = DateTimeOffset.FromUnixTimeMilliseconds(tokenResponse.ExpiresAt)
+                .UtcDateTime
+                .AddSeconds(-60);
+        }
+        catch
+        {
+            _accessToken = tokenResponse.AccessToken;
+            _tokenExpiration = DateTime.UtcNow.AddMinutes(5);
+        }
 
         return _accessToken;
     }
@@ -134,12 +209,12 @@ public sealed class GigaChatLearningMaterialGeneratorService : IAiLearningMateri
     /// <summary>
     /// Создает HttpClient с загруженным сертификатом
     /// </summary>
-    private HttpClient? CreateHttpClientWithCertificate()
+    private static HttpClient CreateHttpClientWithCertificate()
     {
         var certPath = Path.Combine(AppContext.BaseDirectory, "AI", "Certificates", "russian_trusted_root_ca.cer");
 
         if (!File.Exists(certPath))
-            return null;
+            throw new AiTransientException("Файл сертификата для GigaChat не найден: " + certPath);
 
         var certificate = X509CertificateLoader.LoadCertificateFromFile(certPath);
 
@@ -203,6 +278,7 @@ public sealed class GigaChatLearningMaterialGeneratorService : IAiLearningMateri
 
         sb.AppendLine("Ты эксперт в подборе образовательных материалов. ");
         sb.AppendLine("Возвращай ТОЛЬКО валидный JSON массив без дополнительного текста. ");
+        sb.AppendLine("Ссылки должны быть рабочие и актуальные. Не надо придумывать ссылки самому. ");
         sb.AppendLine("Формат: " +
                       "[{\"title\": \"название\", " +
                       "\"author\": \"автор\", " +

@@ -12,7 +12,7 @@ public static class ProblemDetailsMapper
             "validation_error" => StatusCodes.Status422UnprocessableEntity,
             _ => StatusCodes.Status500InternalServerError
         };
-        
+
         var errorTitle = error.Code.Replace("_", " ").ToUpperInvariant();
 
         if (error.ValidationErrors is not null)
@@ -23,7 +23,7 @@ public static class ProblemDetailsMapper
                 statusCode: statusCode
             );
         }
-        
+
         return Results.Problem(
             title: errorTitle,
             detail: error.Message,
