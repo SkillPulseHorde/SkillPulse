@@ -26,7 +26,6 @@ public static class InfrastructureExtensions
 
 
         // Клиенты
-        services.Configure<UserServiceOptions>(configuration);
         services.AddUserServiceClient(configuration);
 
         return services;

@@ -25,6 +25,7 @@ public static class EndpointExtensions
     private static IEndpointRouteBuilder MapCompetenceEndpoints(this IEndpointRouteBuilder app)
     {
         app.MapGetAllCompetencesEndpoint();
+        app.MapGetCompetencesAndCriteriaNamesEndpoint();
 
         return app;
     }
