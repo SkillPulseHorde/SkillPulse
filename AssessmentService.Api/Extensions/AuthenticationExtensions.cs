@@ -10,8 +10,7 @@ public static class AuthenticationExtensions
     {
         services.AddJwtAuthentication(options =>
         {
-            options.SecretKey = configuration["JWT_SECRET_KEY"]
-                                ?? configuration["Jwt:SecretKey"]
+            options.SecretKey = configuration["Jwt:SecretKey"]
                                 ?? throw new InvalidOperationException("JWT SecretKey не найден");
         });
 

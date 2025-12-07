@@ -73,11 +73,6 @@ public sealed class GetRecommendationsByAssessmentIdCommandHandler(
 
         foreach (var recommendationsCompetenceModel in filteredCompetences)
         {
-            if (!recommendationsCompetenceModel.IsEvaluated ||
-                (isCompetencePassedByName.TryGetValue(recommendationsCompetenceModel.CompetenceName, out var value) &&
-                 value == true))
-                continue;
-
             var competenceName = recommendationsCompetenceModel.CompetenceName;
 
             var dbMaterials =
