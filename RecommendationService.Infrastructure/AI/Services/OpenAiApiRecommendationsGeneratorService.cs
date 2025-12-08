@@ -43,7 +43,7 @@ public class OpenAiApiRecommendationsGeneratorService : IAiRecommendationsGenera
             var executionSettings = new OpenAIPromptExecutionSettings
             {
                 Temperature = _settings.Temperature,
-                ResponseFormat = "JSON"
+                ResponseFormat = "json_object"
             };
 
             var response = await chatService.GetChatMessageContentAsync(

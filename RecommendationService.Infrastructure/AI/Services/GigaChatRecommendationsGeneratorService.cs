@@ -49,7 +49,8 @@ public class GigaChatRecommendationsGeneratorService : IAiRecommendationsGenerat
 
         var executionSettings = new OpenAIPromptExecutionSettings
         {
-            Temperature = _settings.Temperature
+            Temperature = _settings.Temperature,
+            ResponseFormat = "json_object"
         };
 
         try

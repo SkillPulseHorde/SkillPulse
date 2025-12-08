@@ -50,7 +50,8 @@ public class GigaChatLearningMaterialGeneratorService : IALearningMaterialsSearc
 
         var executionSettings = new OpenAIPromptExecutionSettings
         {
-            Temperature = _settings.Temperature
+            Temperature = _settings.Temperature,
+            ResponseFormat = "json_object"
         };
 
         try

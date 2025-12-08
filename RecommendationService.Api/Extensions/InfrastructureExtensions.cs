@@ -33,8 +33,8 @@ public static class InfrastructureExtensions
 
 
         // Сервисы
-        //services.AddScoped<IAiRecommendationsGeneratorService, OpenAiApiRecommendationsGeneratorService>(); // Для любой нейросети, работающей по OpenApiAi
-        services.AddScoped<IAiRecommendationsGeneratorService, GigaChatRecommendationsGeneratorService>(); // С получением AccessToken (ГигаЧат)
+        services.AddScoped<IAiRecommendationsGeneratorService, OpenAiApiRecommendationsGeneratorService>(); // Для любой нейросети, работающей по OpenApiAi
+        //services.AddScoped<IAiRecommendationsGeneratorService, GigaChatRecommendationsGeneratorService>(); // С получением AccessToken (ГигаЧат)
 
         services.AddScoped<IALearningMaterialsSearchService, OpenAiApiLearningMaterialGeneratorService>();
         // services.AddScoped<IALearningMaterialsSearchService, GigaChatLearningMaterialsGeneratorService>();
