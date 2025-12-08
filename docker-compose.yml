@@ -136,6 +136,7 @@
     environment:
       - Services__UserService__InternalToken=${INTERNAL_TOKEN}
       - Services__AssessmentService__InternalToken=${INTERNAL_TOKEN}
+      - Services__RecommendationService__InternalToken=${INTERNAL_TOKEN}
       - Jwt__SecretKey=${JWT_SECRET_KEY}
 
 
