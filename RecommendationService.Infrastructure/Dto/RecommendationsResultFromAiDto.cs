@@ -14,9 +14,6 @@ public sealed record RecommendationsResultFromAiDto
     [JsonPropertyName("wayToImproveCompetence")]
     public required string WayToImproveCompetence { get; init; }
 
-    [JsonPropertyName("isEvaluated")]
-    public required bool IsEvaluated { get; init; }
-
     public RecommendationsCompetenceModel ToRecommendationsCompetenceModel()
     {
         return new RecommendationsCompetenceModel

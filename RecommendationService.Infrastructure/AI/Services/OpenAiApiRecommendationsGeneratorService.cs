@@ -138,6 +138,7 @@ public class OpenAiApiRecommendationsGeneratorService : IAiRecommendationsGenera
         sb.AppendLine("Если IsPassedThreshold = null - верни пустым поле wayToImproveCompetence");
         sb.AppendLine(
             "Разделитель - §§ - используется только в случае, если нужно выделить несколько пунктов в wayToImproveCompetence. ");
+        sb.AppendLine("Разделить может стоят ТОЛЬКО между пунктами, которые разделяет");
         sb.AppendLine("В других пунктах не используй разделитель. Где разделить используется - не используй маркеры списков (как и перечисление). ");
         sb.AppendLine("Входной формат для каждой компетенции: " +
                       "[\"competenceName\": \"название компетенции\", " +
@@ -146,8 +147,7 @@ public class OpenAiApiRecommendationsGeneratorService : IAiRecommendationsGenera
         sb.AppendLine("Выходной формат для каждой компетенции: " +
                       "[\"competenceName\": \"название компетенции\", " +
                       "\"competenceReason\": \"объяснение, почему это важно для работы (работа в ИТ сфере)\", " +
-                      "\"wayToImproveCompetence\": \"способы улучшения (самостоятельные) от 1 до 5, сколько сможешь. \"" +
-                      "\"isEvaluated\": \"false - если IsPassedThreshold = null, иначе true\"]");
+                      "\"wayToImproveCompetence\": \"способы улучшения (самостоятельные) от 1 до 5, сколько сможешь. \"]");
 
         return sb.ToString();
     }
