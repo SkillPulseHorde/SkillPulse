@@ -49,7 +49,8 @@ public class GigaChatRecommendationsGeneratorService : IAiRecommendationsGenerat
 
         var executionSettings = new OpenAIPromptExecutionSettings
         {
-            Temperature = _settings.Temperature
+            Temperature = _settings.Temperature,
+            ResponseFormat = "json_object"
         };
 
         try
@@ -278,6 +279,7 @@ public class GigaChatRecommendationsGeneratorService : IAiRecommendationsGenerat
         sb.AppendLine("Если IsPassedThreshold = null - верни пустым поле wayToImproveCompetence");
         sb.AppendLine(
             "Разделитель - §§ - используется только в случае, если нужно выделить несколько пунктов в wayToImproveCompetence. ");
+        sb.AppendLine("Разделить может стоят ТОЛЬКО между пунктами, которые разделяет");
         sb.AppendLine("Входной формат для каждой компетенции: " +
                       "[\"competenceName\": \"название компетенции\", " +
                       "\"badCriteria\": [\"Список недостаточно развитых критериев через запятую\"]" +
@@ -285,8 +287,7 @@ public class GigaChatRecommendationsGeneratorService : IAiRecommendationsGenerat
         sb.AppendLine("Выходной формат для каждой компетенции: " +
                       "[\"competenceName\": \"название компетенции\", " +
                       "\"competenceReason\": \"объяснение, почему это важно для работы (работа в ИТ сфере)\", " +
-                      "\"wayToImproveCompetence\": \"способы улучшения (самостоятельные) от 1 до 5, сколько сможешь. Разделитель - §§\"" +
-                      "\"isEvaluated\": \"false - если IsPassedThreshold = null, иначе true\"]");
+                      "\"wayToImproveCompetence\": \"способы улучшения (самостоятельные) от 1 до 5, сколько сможешь. Разделитель - §§\"]");
 
         return sb.ToString();
     }
