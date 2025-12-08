@@ -1,5 +1,4 @@
 using AssessmentService.Api.Dto;
-using AssessmentService.Api.Middleware;
 using AssessmentService.Application.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -23,7 +22,6 @@ public static class GetAssessmentResult
                     : result.Error!.ToProblemDetails();
             })
             .Produces<AssessmentResultResponseDto>()
-            .AddEndpointFilter<RequireInternalRoleFilter>()
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .WithSummary("Получить результат аттестации по её ID")

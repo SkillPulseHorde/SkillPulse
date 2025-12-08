@@ -4,7 +4,7 @@ namespace RecommendationService.Api.Dto;
 
 public sealed record RecommendationsResponseDto
 {
-    public List<CompetenceRecommendation> RecommendationCompetences { get; set; } = [];
+    public List<CompetenceRecommendation> CompetenceRecommendations { get; set; } = [];
 }
 
 public sealed record CompetenceRecommendation
@@ -35,7 +35,7 @@ public static class GetRecommendationResponseDtoExtensions
     {
         return new RecommendationsResponseDto()
         {
-            RecommendationCompetences = model.RecommendationCompetences.Select(c => new CompetenceRecommendation
+            CompetenceRecommendations = model.RecommendationCompetences.Select(c => new CompetenceRecommendation
             {
                 CompetenceName = c.CompetenceName,
                 CompetenceReason = c.CompetenceReason,

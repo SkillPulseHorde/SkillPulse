@@ -7,7 +7,6 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using ReportService.Api;
 using ReportService.Api.Dto;
-using ReportService.Api.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,8 +23,6 @@ var app = builder.Build();
 
 app.UseSwagger();
 app.UseSwaggerUI();
-
-app.UseMiddleware<InternalAuthMiddleware>();
 
 if (app.Environment.IsDevelopment())
     app.UseMiddleware<DevelopmentAuthenticationMiddleware>();
@@ -68,7 +65,7 @@ app.MapPost("/api/reports/generate", async Task<IResult> (
     .ProducesProblem(StatusCodes.Status404NotFound)
     .WithSummary("Генерация отчёта по результатам аттестации")
     .WithDescription("Принимает ID аттестации и изображение графика (form-data), возвращает DOCX файл")
-    //.RequireAuthorization("Authenticated")
+    .RequireAuthorization("Authenticated")
     .DisableAntiforgery();
 
 app.Run();

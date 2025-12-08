@@ -1,5 +1,4 @@
 using AssessmentService.Api.Extensions;
-using AssessmentService.Api.Middleware;
 using Common.Middleware;
 using Common.Shared.Auth.Extensions;
 
@@ -13,8 +12,6 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerDocumentation();
 
 var app = builder.Build();
-
-app.UseMiddleware<InternalAuthMiddleware>();
 
 app.UseSwagger();
 app.UseSwaggerUI();

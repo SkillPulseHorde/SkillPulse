@@ -1,5 +1,4 @@
 using AssessmentService.Api.Dto;
-using AssessmentService.Api.Middleware;
 using AssessmentService.Application.Queries;
 using MediatR;
 
@@ -21,7 +20,7 @@ public static class GetCompetencesAndCriteriaNames
                     : result.Error!.ToProblemDetails();
             })
             .Produces<CompetencesAndCriteriaNamesModelResponseDto>()
-            .AddEndpointFilter<RequireInternalRoleFilter>()
+            .RequireAuthorization("ServiceOnly")
             .WithSummary("Получить словари (ID -> название компетенции/критерия)");
 
         return app;
