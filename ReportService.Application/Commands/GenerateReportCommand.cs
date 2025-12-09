@@ -1,6 +1,7 @@
 ﻿using Common;
 using FluentValidation;
 using MediatR;
+using Microsoft.Extensions.Logging;
 using ReportService.Application.Models;
 using ReportService.Application.ServiceClientsAbstract;
 
@@ -17,42 +18,68 @@ public sealed class GenerateReportCommandHandler(
     IReportGenerator reportGenerator,
     IAssessmentServiceClient assessmentServiceClient,
     IUserServiceClient userServiceClient,
-    IRecommendationServiceClient recommendationServiceClient)
+    IRecommendationServiceClient recommendationServiceClient,
+    ILogger<GenerateReportCommandHandler> logger)
     : IRequestHandler<GenerateReportCommand, Result<ReportModel>>
 {
     public async Task<Result<ReportModel>> Handle(GenerateReportCommand request, CancellationToken ct)
     {
         try
         {
-            var assessmentResult = await assessmentServiceClient.GetAssessmentResultByIdAsync(request.AssessmentId, ct);
-            var names = await assessmentServiceClient.GetCompetencesAndCriteriaNamesAsync(ct);
-            
-            var employeeInfo = await userServiceClient.GetUserByIdAsync(request.EmployeeId, ct);
-            
+            // Запускаем независимые вызовы параллельно
+            var assessmentTask = assessmentServiceClient.GetAssessmentResultByIdAsync(request.AssessmentId, ct);
+            var namesTask = assessmentServiceClient.GetCompetencesAndCriteriaNamesAsync(ct);
+            var employeeTask = userServiceClient.GetUserByIdAsync(request.EmployeeId, ct);
+
+            await Task.WhenAll(assessmentTask, namesTask, employeeTask);
+
+            var assessmentResult = await assessmentTask;
+            var names = await namesTask;
+            var employeeInfo = await employeeTask;
+
             var recommendations = await recommendationServiceClient
                 .GetRecommendationsByAssessmentIdAsync(request.AssessmentId, request.EmployeeId, ct);
 
             var reportData = await reportGenerator.GenerateReportAsync(
-                assessmentResult, 
-                names, 
+                assessmentResult,
+                names,
                 recommendations,
-                request.ChartImage, 
-                employeeInfo.FullName, 
+                request.ChartImage,
+                employeeInfo.FullName,
                 ct);
+            
+            // Очищаем имя сотрудника от недопустимых для имени файла символов
+            var invalidChars = Path.GetInvalidFileNameChars();
+            var employeeName = new string(employeeInfo.FullName
+                .Where(c => !invalidChars.Contains(c))
+                .ToArray());
+
+            if (string.IsNullOrWhiteSpace(employeeName))
+                employeeName = "Employee";
+
+            var safeFileName = $"Assessment_Report_{employeeName}.docx";
 
             return new ReportModel
             {
                 Data = reportData,
-                EmployeeName = employeeInfo.FullName
+                FileName = safeFileName
             };
+        }
+        catch (FileNotFoundException ex)
+        {
+            return Error.NotFound(ex.Message);
         }
         catch (HttpRequestException ex)
         {
-            return Error.Conflict($"Не удалось получить данные для аттестации {request.AssessmentId}: {ex.Message}");
+            logger.LogError(ex, "Ошибка получения данных для формирования отчета. AssessmentId: {AssessmentId}, EmployeeId: {EmployeeId}",
+                request.AssessmentId, request.EmployeeId);
+            return Error.ServiceUnavailable("Не удалось получить данные для генерации отчёта. Попробуйте позже.");
         }
         catch (Exception ex)
         {
-            return Error.Conflict($"Ошибка при генерации отчёта: {ex.Message}");
+            logger.LogError(ex, "Неожиданная ошибка в процессе формирования отчета. AssessmentId: {AssessmentId}, EmployeeId: {EmployeeId}",
+                request.AssessmentId, request.EmployeeId);
+            return Error.InternalServerError("Ошибка при генерации отчёта. Попробуйте позже.");
         }
     }
 }
@@ -64,6 +91,10 @@ public sealed class GenerateReportCommandValidator : AbstractValidator<GenerateR
         RuleFor(x => x.AssessmentId)
             .NotEmpty()
             .WithMessage("ID аттестации обязателен");
+
+        RuleFor(x => x.EmployeeId)
+            .NotEmpty()
+            .WithMessage("ID сотрудника обязателен");
 
         RuleFor(x => x.ChartImage)
             .NotEmpty()

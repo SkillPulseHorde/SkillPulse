@@ -16,9 +16,9 @@ var app = builder.Build();
 app.UseSwagger();
 app.UseSwaggerUI();
 
-var internalToken = app.Configuration.GetSection("Services:UserService:InternalToken")
+var internalToken = app.Configuration.GetSection("Services:UserService:InternalToken").Value
                     ?? throw new InvalidOperationException("InternalToken не найден");
-app.UseMiddleware<ServiceAuthenticationMiddleware>(internalToken.Value);
+app.UseMiddleware<ServiceAuthenticationMiddleware>(internalToken);
 
 app.UseAuthentication();
 

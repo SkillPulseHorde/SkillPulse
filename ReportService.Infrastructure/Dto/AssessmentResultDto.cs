@@ -13,6 +13,6 @@ public sealed record CompetenceSummaryDto
 
 public sealed record CriterionSummaryDto
 {
-    public required double AverageCriterionScore { get; init; }
+    public required double? AverageCriterionScore { get; init; }
     public required List<string> CriterionComments { get; init; }
 }

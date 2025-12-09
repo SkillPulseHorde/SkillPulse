@@ -15,9 +15,7 @@ builder.Services.AddRoleBasedAuthorization();
 builder.Services.AddApplication();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerDocumentation();
-builder.Services.AddUserServiceClient(builder.Configuration);
-builder.Services.AddAssessmentServiceClient(builder.Configuration);
-builder.Services.AddRecommendationServiceClient(builder.Configuration);
+builder.Services.AddServiceClients(builder.Configuration);
 
 var app = builder.Build();
 
@@ -35,8 +33,13 @@ app.MapPost("/api/reports/generate", async Task<IResult> (
         IMediator mediator,
         CancellationToken ct) =>
     {
-        if (request.ChartImage.Length == 0)
-            return Results.BadRequest(new { error = "Изображение графика обязательно" });
+        // Базовая проверка того, что загружается именно изображение
+        var contentType = request.ChartImage.ContentType;
+        if (string.IsNullOrWhiteSpace(contentType) ||
+            !(contentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase)))
+        {
+            return Results.BadRequest(new { error = "Допускается загрузка только файлов изображений" });
+        }
 
         // Читаем файл в массив байтов
         using var memoryStream = new MemoryStream();
@@ -54,11 +57,11 @@ app.MapPost("/api/reports/generate", async Task<IResult> (
 
         if (!result.IsSuccess)
             return result.Error!.ToProblemDetails();
-
+        
         return Results.File(
             result.Value.Data,
             "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        $"Assessment_Report_{result.Value.EmployeeName.Replace(" ", "")}.docx");
+            result.Value.FileName);
     })
     .Produces<FileResult>()
     .ProducesProblem(StatusCodes.Status400BadRequest)

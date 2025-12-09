@@ -24,7 +24,7 @@ var app = builder.Build();
 app.UseSwagger();
 app.UseSwaggerUI();
 
-app.UseMiddleware<ServiceAuthenticationMiddleware>(app.Configuration.GetSection("InternalToken").Value ?? 
+app.UseMiddleware<ServiceAuthenticationMiddleware>(app.Configuration.GetSection("InternalToken").Value ??
                                                    throw new InvalidOperationException("InternalToken не был передан"));
 
 app.UseAuthentication();

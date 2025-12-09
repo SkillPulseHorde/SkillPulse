@@ -14,6 +14,8 @@ public sealed class GetCompetencesAndCriteriaNamesQueryHandler(
     public async Task<Result<CompetencesAndCriteriaNamesModel>> Handle(GetCompetencesAndCriteriaNamesQuery request, CancellationToken ct)
     {
         var competences = await competenceRepository.GetAllCompetencesReadOnlyAsync(ct);
+        if (competences.Length == 0)
+            return Error.NotFound("Компетенции не найдены");
 
         var competenceNames = competences.ToDictionary(c => c.Id, c => c.Name);
         

@@ -30,17 +30,17 @@ public sealed class CreateEvaluationCommandHandler(
         var assessment = await assessmentRepository.GetByIdReadonlyAsync(request.AssessmentId, ct);
         if (assessment == null)
             return Error.NotFound($"Аттестация с ID {request.AssessmentId} не найдена");
-        
+    
         // Проверяем, что аттестация активна
         var now = DateTime.UtcNow;
         if (now < assessment.StartAt || now > assessment.EndsAt)
             return Error.Conflict("Аттестация не активна в данный момент");
-        
+    
         // Проверяем, что оценщик назначен на эту аттестацию
         var isCurrentEvaluatorAssigned = assessment.Evaluators.Any(e => e.EvaluatorId == request.EvaluatorId);
         if (!isCurrentEvaluatorAssigned)
             return Error.Forbidden("Оценщик не назначен на данную аттестацию");
-        
+    
         // Проверяем существование всех компетенций
         var competenceIds = request.CompetenceEvaluations.Select(ce => ce.CompetenceId).ToList();
         var existingCompetences = await competenceRepository.GetByIdsAsync(competenceIds, ct);

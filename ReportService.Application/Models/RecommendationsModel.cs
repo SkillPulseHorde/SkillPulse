@@ -7,7 +7,7 @@ public sealed record RecommendationsModel
 
 public sealed record CompetenceRecommendationModel
 {
-    public required string CompetenceName { get; set; } = string.Empty;
+    public string CompetenceName { get; set; } = string.Empty;
 
     public string CompetenceReason { get; set; } = string.Empty;
 

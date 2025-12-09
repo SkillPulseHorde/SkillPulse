@@ -7,7 +7,7 @@ public sealed record RecommendationsDto
 
 public sealed record CompetenceRecommendationDto
 {
-    public required string CompetenceName { get; set; } = string.Empty;
+    public string CompetenceName { get; set; } = string.Empty;
 
     public string CompetenceReason { get; set; } = string.Empty;
 

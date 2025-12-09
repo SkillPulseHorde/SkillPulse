@@ -50,9 +50,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RecommendationService.Infrastructure", "RecommendationService.Infrastructure\RecommendationService.Infrastructure.csproj", "{E9180F0B-9A86-466C-B5F2-17504A1B550B}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ReportService", "ReportService", "{4D448AFB-C7A8-4627-A18F-E199490BE63E}"
-	ProjectSection(SolutionItems) = preProject
-		ServiceRegistration\UserServiceRegistration.cs = ServiceRegistration\UserServiceRegistration.cs
-	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReportService.Api", "ReportService.Api\ReportService.Api.csproj", "{9AEA306B-955E-47DF-8451-3578B51C4C7A}"
 EndProject

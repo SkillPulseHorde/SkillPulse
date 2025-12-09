@@ -31,15 +31,15 @@ public class ReportGenerator : IReportGenerator
         {
             if (!File.Exists(_templatePath))
                 throw new FileNotFoundException($"Шаблон отчёта не найден: {_templatePath}");
-            
+
             using var templateStream = File.OpenRead(_templatePath);
             using var generatedDoc = new MemoryStream();
             templateStream.CopyTo(generatedDoc);
             generatedDoc.Position = 0;
 
             using var processor = new TemplateProcessor(generatedDoc).SetRemoveContentControls(true);
-            
-            var recommendationText = BuildRecommendationsText(recommendations);
+
+            var recommendationText = ToDocxNewLines(BuildRecommendationsText(recommendations));
 
             var contentItems = new List<IContentItem>
             {
@@ -57,11 +57,13 @@ public class ReportGenerator : IReportGenerator
                 }
 
                 var competenceCommentsText = string.Join(
-                    Environment.NewLine, 
+                    "\r\n",
                     competenceSummary.Comments.Select(c => $"🗯️ {c}"));
-                
+
+                competenceCommentsText = ToDocxNewLines(competenceCommentsText);
+
                 var competenceTag = $"{competenceName}_Comments";
-                
+
                 contentItems.Add(new FieldContent(competenceTag, competenceCommentsText));
 
                 foreach (var (criterionId, criterionSummary) in competenceSummary.CriterionSummaries)
@@ -70,12 +72,15 @@ public class ReportGenerator : IReportGenerator
                         continue;
 
                     var scoreTag = $"{criterionName}_Score";
-                    contentItems.Add(new FieldContent(scoreTag, criterionSummary.Score?.ToString("0.##") 
-                    ?? "Ещё не оценивался"));
-                    
+                    contentItems.Add(new FieldContent(
+                        scoreTag, criterionSummary.Score?.ToString("0.##") ?? "Ещё не оценивался"));
+
                     var commentsText = string.Join(
-                        Environment.NewLine, 
-                        criterionSummary.Comments.Select(c => $"🗣{c}"));
+                        "\r\n",
+                        criterionSummary.Comments.Select(c => $"🗣 {c}"));
+
+                    commentsText = ToDocxNewLines(commentsText);
+
                     var commentsTag = $"{criterionName}_Comments";
                     contentItems.Add(new FieldContent(commentsTag, commentsText));
                 }
@@ -91,6 +96,10 @@ public class ReportGenerator : IReportGenerator
             generatedDoc.CopyTo(resultStream);
 
             return resultStream.ToArray();
+        }
+        catch (FileNotFoundException)
+        {
+            throw;
         }
         catch (Exception ex)
         {
@@ -118,7 +127,7 @@ public class ReportGenerator : IReportGenerator
 
             if (!string.IsNullOrWhiteSpace(rec.CompetenceReason))
             {
-                sb.AppendLine($"Важность : {rec.CompetenceReason}");
+                sb.AppendLine($"Важность: {rec.CompetenceReason}");
             }
 
             if (!rec.IsEvaluated)
@@ -191,4 +200,10 @@ public class ReportGenerator : IReportGenerator
             _ => type
         };
     }
+    
+    // Нормализация переводов строк к формату CRLF, который ожидает Word/TemplateEngine.Docx
+    private static string ToDocxNewLines(string text) =>
+        string.IsNullOrEmpty(text)
+            ? text
+            : text.Replace("\r\n", "\n").Replace("\n", "\r\n");
 }

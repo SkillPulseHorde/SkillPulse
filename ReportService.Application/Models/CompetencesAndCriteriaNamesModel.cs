@@ -2,6 +2,6 @@
 
 public sealed record CompetencesAndCriteriaNamesModel
 {
-    public required Dictionary<Guid, string> CompetenceNames { get; set; }
-    public required Dictionary<Guid, string> CriterionNames { get; set; }
+    public required Dictionary<Guid, string> CompetenceNames { get; init; }
+    public required Dictionary<Guid, string> CriterionNames { get; init; }
 }

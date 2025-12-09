@@ -2,6 +2,6 @@
 
 public record ReportModel
 {
-    public required string EmployeeName { get; init; }
+    public required string FileName { get; init; }
     public required byte[] Data { get; init; }
 }
