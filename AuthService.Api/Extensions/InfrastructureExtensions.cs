@@ -4,7 +4,6 @@ using AuthService.Application.interfaces;
 using AuthService.Infrastructure;
 using AuthService.Infrastructure.Db;
 using AuthService.Infrastructure.Repos;
-using AuthService.Infrastructure.Http.ServiceClientOptions;
 using Microsoft.EntityFrameworkCore;
 
 namespace AuthService.Api.Extensions;
@@ -27,7 +26,6 @@ public static class InfrastructureExtensions
         services.AddScoped<IJwtProvider, JwtProvider>();
 
         // Клиенты
-        services.Configure<UserServiceOptions>(configuration);
         services.AddUserServiceClient(configuration);
 
         return services;

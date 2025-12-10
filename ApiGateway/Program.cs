@@ -24,6 +24,7 @@ app.UseSwaggerUI(c =>
     c.SwaggerEndpoint("/swagger/assessmentservice/swagger.json", "AssessmentService");
     c.SwaggerEndpoint("/swagger/authservice/swagger.json", "AuthService");
     c.SwaggerEndpoint("/swagger/recommendationservice/swagger.json", "RecommendationService");
+    c.SwaggerEndpoint("/swagger/reportservice/swagger.json", "ReportService");
 });
 
 

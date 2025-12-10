@@ -31,4 +31,3 @@ public static class GetAllCompetences
         return app;
     }
 }
-

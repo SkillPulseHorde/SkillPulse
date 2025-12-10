@@ -20,7 +20,10 @@ public sealed class GetAssessmentResultQueryHandler(
 
         if (assessment is null)
             return Error.NotFound($"Аттестация с ID {request.AssessmentId} не найдена");
-
+        
+        if (assessment.StartAt >= DateTime.UtcNow)
+            return Error.Conflict("Аттестация ещё не началась. Результаты будут доступны после её начала.");
+        
         var assessmentResult = await evaluationAnalyzer.GetAssessmentResultByAssessmentIdAsync(request.AssessmentId, ct);
 
         if (assessmentResult is null)

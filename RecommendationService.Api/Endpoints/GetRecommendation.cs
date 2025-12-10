@@ -39,7 +39,7 @@ public static class GetRecommendation
                 };
                 return operation;
             })
-            .RequireAuthorization("Authenticated");
+            .RequireAuthorization("AuthenticatedAndService");
 
         return app;
     }

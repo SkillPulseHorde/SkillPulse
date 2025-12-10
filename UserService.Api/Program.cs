@@ -50,7 +50,7 @@ app.MapGet("/api/users/{id:guid}", async (Guid id, IMediator mediator, Cancellat
     .ProducesProblem(StatusCodes.Status401Unauthorized)
     .ProducesProblem(StatusCodes.Status404NotFound)
     .WithSummary("Получить пользователя по ID")
-    .RequireAuthorization("Authenticated");
+    .RequireAuthorization("AuthenticatedAndService");
 
 
 app.MapGet("/api/users", async (
@@ -119,7 +119,7 @@ app.MapPost("/api/users/exist", async (
             ? Results.Ok(result.Value)
             : result.Error!.ToProblemDetails();
     })
-    .RequireAuthorization("AuthenticatedAndService")
+    .RequireAuthorization("ServiceOnly")
     .Produces<bool>()
     .WithSummary("Проверить существование пользователей по списку ID");
 
