@@ -6,6 +6,7 @@ public class CompetenceResponseDto
 {
     public Guid Id { get; set; }
     public required string Name { get; set; }
+    public required string Description { get; set; }
     public List<CriterionResponseDto> Criteria { get; set; } = [];
 }
 
@@ -25,6 +26,7 @@ public static class CompetenceResponseDtoExtensions
         {
             Id = competence.Id,
             Name = competence.Name,
+            Description = competence.Description,
             Criteria = competence.Criteria.Select(c => new CriterionResponseDto
             {
                 Id = c.Id,

@@ -28,6 +28,7 @@ public sealed class GetAllCompetencesQueryHandler(
             {
                 Id = c.Id,
                 Name = c.Name,
+                Description = c.Description,
                 Criteria = c.Criteria.Select(cr => new CriterionModel
                 {
                     Id = cr.Id,
