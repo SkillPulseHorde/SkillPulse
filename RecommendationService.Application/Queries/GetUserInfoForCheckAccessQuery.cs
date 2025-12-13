@@ -15,7 +15,7 @@ public sealed class GetUserInfoForCheckAccessQueryHandler(
     {
         var user = await userServiceClient.GetUserByIdAsync(request.UserId, ct);
         return user == null
-            ? Error.NotFound("Пользователь не был найден")
+            ? Error.NotFound($"Пользователь с идентификатором {request.UserId} не был найден")
             : user;
     }
 }
