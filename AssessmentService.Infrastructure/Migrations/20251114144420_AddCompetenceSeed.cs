@@ -15,24 +15,26 @@ namespace AssessmentService.Infrastructure.Migrations
             foreach (var competence in CompetenceSeed.Data)
             {
                 var compId = Guid.NewGuid();
-                migrationBuilder.Sql($@"
-                    INSERT INTO ""Competences"" (""Id"", ""Name"") VALUES ('{compId}', '{competence.Name.Replace("'", "''")}');
-                ");
 
+                // Вставляем компетенцию с описанием
+                migrationBuilder.Sql($@"
+                    INSERT INTO ""Competences"" (""Id"", ""Name"", ""Description"")
+                    VALUES ('{compId}', '{competence.Name.Replace("'", "''")}', '{competence.Description.Replace("'", "''")}');");
+
+                // Вставляем критерии уровня Core
                 foreach (var name in competence.Core)
                 {
                     migrationBuilder.Sql($@"
                         INSERT INTO ""Criteria"" (""Id"", ""CompetenceId"", ""Name"", ""Level"")
-                        VALUES ('{Guid.NewGuid()}', '{compId}', '{name.Replace("'", "''")}', 'Core');
-                    ");
+                        VALUES ('{Guid.NewGuid()}', '{compId}', '{name.Replace("'", "''")}', 'Core');");
                 }
 
+                // Вставляем критерии уровня Advanced
                 foreach (var name in competence.Advanced)
                 {
                     migrationBuilder.Sql($@"
                         INSERT INTO ""Criteria"" (""Id"", ""CompetenceId"", ""Name"", ""Level"")
-                        VALUES ('{Guid.NewGuid()}', '{compId}', '{name.Replace("'", "''")}', 'Advanced');
-                    ");
+                        VALUES ('{Guid.NewGuid()}', '{compId}', '{name.Replace("'", "''")}', 'Advanced');");
                 }
             }
         }
