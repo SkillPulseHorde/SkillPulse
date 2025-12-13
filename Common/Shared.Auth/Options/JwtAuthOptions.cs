@@ -2,7 +2,7 @@
 
 namespace Common.Shared.Auth.Options;
 
-public class JwtAuthOptions
+public sealed class JwtAuthOptions
 {
     [Required]
     public string SecretKey { get; set; } = string.Empty;

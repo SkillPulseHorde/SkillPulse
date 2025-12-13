@@ -24,23 +24,14 @@ public sealed class UserServiceClient : IUserServiceClient
 
     public async Task<ShortUserModel?> GetUserByIdAsync(Guid userId, CancellationToken ct = default)
     {
-        var requestDto = new GetUsersByIdsRequestDto
-        {
-            UserIds = [userId]
-        };
-
-        using var request = new HttpRequestMessage(HttpMethod.Post, $"{BaseUrl}/by-ids");
-        request.Content = JsonContent.Create(requestDto);
+        using var request = new HttpRequestMessage(HttpMethod.Get, $"{BaseUrl}/{userId}");
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _internalToken);
 
         using var response = await _httpClient.SendAsync(request, ct);
         response.EnsureSuccessStatusCode();
 
-        var users = await response.Content.ReadFromJsonAsync<List<UserServiceDto>>(cancellationToken: ct);
+        var users = await response.Content.ReadFromJsonAsync<UserServiceDto>(cancellationToken: ct);
 
-        if (users is null || users.Count == 0)
-            return null;
-
-        return users.First().ToShortUserModel();
+        return users?.ToShortUserModel();
     }
 }
