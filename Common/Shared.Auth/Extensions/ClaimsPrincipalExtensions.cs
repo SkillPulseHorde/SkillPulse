@@ -37,6 +37,8 @@ public static class ClaimsPrincipalExtensions
 
         var role = user.FindFirstValue(ClaimsIdentity.DefaultRoleClaimType);
         var teamName = user.FindFirstValue("TeamName");
+        if (teamName == "null")
+            teamName = null;
 
         return new RequesterInfo
         (

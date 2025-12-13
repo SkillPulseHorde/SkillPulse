@@ -1,6 +1,4 @@
 ﻿using Common;
-using Common.Shared.Auth;
-using Common.Shared.Auth.Constants;
 using MediatR;
 using UserService.Application.Models;
 using UserService.Domain.Repos;

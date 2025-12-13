@@ -30,8 +30,8 @@ public sealed class UserServiceClient : IUserServiceClient
         using var response = await _httpClient.SendAsync(request, ct);
         response.EnsureSuccessStatusCode();
 
-        var users = await response.Content.ReadFromJsonAsync<UserServiceDto>(cancellationToken: ct);
+        var user = await response.Content.ReadFromJsonAsync<UserServiceDto>(cancellationToken: ct);
 
-        return users?.ToShortUserModel();
+        return user?.ToShortUserModel();
     }
 }
