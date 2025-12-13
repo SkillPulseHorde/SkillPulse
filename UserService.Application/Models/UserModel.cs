@@ -11,6 +11,7 @@ public record UserModel(
     Grade Grade,
     string? TeamName,
     string? ManagerName,
+    Guid? ManagerId,
     Position Position);
 
 public static class UserModelExtensions
@@ -25,7 +26,8 @@ public static class UserModelExtensions
             user.Grade,
             user.TeamName,
             user.Manager == null
-            ? null
-            : $"{user.Manager.LastName} {user.Manager.MidName} {user.Manager.FirstName}",
+                ? null
+                : $"{user.Manager.LastName} {user.Manager.MidName} {user.Manager.FirstName}",
+            user.ManagerId,
             user.Position);
 }

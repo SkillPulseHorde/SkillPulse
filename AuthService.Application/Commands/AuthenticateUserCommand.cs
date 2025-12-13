@@ -44,7 +44,7 @@ public sealed class AuthenticateUserCommandHandler : IRequestHandler<Authenticat
         if (userFromUserService is null)
             return Error.Unauthorized("Пользователь не найден в UserService");
 
-        var accessToken = _jwtProvider.GenerateAccessToken(user, userFromUserService.Position);
+        var accessToken = _jwtProvider.GenerateAccessToken(user, userFromUserService.Position, userFromUserService.TeamName);
         var refreshToken = _jwtProvider.GenerateRefreshToken();
 
         user.SetRefreshToken(
