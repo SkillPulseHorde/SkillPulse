@@ -2,20 +2,12 @@
 
 public static class Roles
 {
-    private const string Employee = "Employee";
-
-    private const string DepartmentManager = "DepartmentManager";
-
-    private const string ProductManager = "ProductManager";
-
-    private const string Hr = "HR";
-
     /// <summary>
     /// Hr роль
     /// </summary>
     public static readonly string[] OnlyHr =
     [
-        Hr
+        Role.Hr
     ];
 
     /// <summary>
@@ -23,8 +15,8 @@ public static class Roles
     /// </summary>
     public static readonly string[] AllManagers =
     [
-        DepartmentManager,
-        ProductManager
+        Role.DepartmentManager,
+        Role.ProductManager
     ];
 
     /// <summary>
@@ -33,7 +25,7 @@ public static class Roles
     public static readonly string[] AllManagersAndHr =
     [
         ..AllManagers,
-        Hr
+        Role.Hr
     ];
 
     /// <summary>
@@ -41,7 +33,7 @@ public static class Roles
     /// </summary>
     public static readonly string[] AllRoles =
     [
-        Employee,
+        Role.Employee,
         ..AllManagersAndHr
     ];
 }

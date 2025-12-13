@@ -18,12 +18,13 @@ public class JwtProvider : IJwtProvider
         _jwtOptions = jwtOptions.Value;
     }
 
-    public string GenerateAccessToken(User user, string role)
+    public string GenerateAccessToken(User user, string role, string? teamName)
     {
         Claim[] claims =
         [
             new(ClaimTypes.NameIdentifier, user.UserId.ToString()),
-            new(ClaimsIdentity.DefaultRoleClaimType, role)
+            new(ClaimsIdentity.DefaultRoleClaimType, role),
+            new("TeamName", teamName ?? "null")
         ];
 
         var signingCredentials = new SigningCredentials(

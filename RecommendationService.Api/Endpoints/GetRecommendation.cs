@@ -1,8 +1,13 @@
-﻿using MediatR;
+﻿using System.Security.Claims;
+using Common.Shared.Auth;
+using Common.Shared.Auth.Models;
+using Common;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.OpenApi.Any;
 using RecommendationService.Api.Dto;
 using RecommendationService.Application.Commands;
+using RecommendationService.Application.Queries;
 
 namespace RecommendationService.Api.Endpoints;
 
@@ -13,8 +18,25 @@ public static class GetRecommendation
         app.MapPost("/api/recommendations", async (
                 [FromBody] GetRecommendationRequestDto request,
                 IMediator mediator,
+                ClaimsPrincipal user,
                 CancellationToken ct) =>
             {
+                var userInfo = await mediator.Send(new GetUserInfoForCheckAccessQuery(request.UserId), ct);
+                if (!userInfo.IsSuccess)
+                    return userInfo.Error!.ToProblemDetails();
+
+                var profile = userInfo.Value;
+                var canUserAccess = AccessPolicy.CanAccess(
+                    user,
+                    new TargetInfo(
+                        Id: profile.Id,
+                        Team: profile.TeamName,
+                        ManagerId: profile.ManagerId,
+                        Role: profile.Position));
+
+                if (!canUserAccess)
+                    return Error.Forbidden("Отсутствует доступ").ToProblemDetails();
+
                 var command = new GetRecommendationsByAssessmentIdCommand
                 {
                     UserId = request.UserId,
